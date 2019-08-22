@@ -1,0 +1,4 @@
+{"cmd": "restart"}
+{"cmd": "stop", "delay": 0}
+{"cmd": "start"}
+{"cmd": "ping"} => {"cmd": "pong"}

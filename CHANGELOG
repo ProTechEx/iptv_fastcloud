@@ -1,0 +1,21 @@
+1.5.0 / August 22, 2019
+[Alexandr Topilski]
+- RTSP input bandwidth calc
+- Json parse optimizations
+- Http proxy for soup
+- Subscribers flag
+- IP cams handling
+- MacOSX build
+- FreeBSD build
+- Rtsp source element
+- StreamLink support
+- IP Camera
+- Deep learning initialization
+- Object detection
+- Channels on demand
+- Device count check
+- Subscribers
+- User agent
+- Data statistics in bytes, time in seconds
+- Stabilization
+- Avformat streams
