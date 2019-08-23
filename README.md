@@ -21,7 +21,7 @@ About IPTV/Video cloud
 * Protocol gzip compression
 * Deep learning video analysis (Paid, demo by request)
 * Subscribers control
-* [Amazon Kinesis Video Streams integration](https://aws.amazon.com/kinesis/video-streams/)
+* [Amazon Kinesis Video Streams integration](https://aws.amazon.com/kinesis/video-streams)
 * [Admin panel](https://github.com/fastogt/iptv_admin)
 * [Docker Image](https://hub.docker.com/r/fastogt/fastocloud)
 
