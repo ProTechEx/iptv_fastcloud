@@ -1,4 +1,5 @@
 OPTION(MACHINE_LEARNING "ML plugins" OFF)
+OPTION(AMAZON_KINESIS "AWS KVS plugins" OFF)
 OPTION(SUBSCRIBERS "Subscribers" OFF)
 
 # projects globals names
@@ -80,6 +81,16 @@ IF(MACHINE_LEARNING)
     ${CMAKE_SOURCE_DIR}/src/base/machine_learning/deep_learning_overlay.cpp
   )
 ENDIF(MACHINE_LEARNING)
+
+IF(AMAZON_KINESIS)
+  ADD_DEFINITIONS(-DAMAZON_KINESIS)
+  SET(BASE_HEADERS ${BASE_HEADERS}
+    ${CMAKE_SOURCE_DIR}/src/base/amazon_kinesis/amazon_kinesis.h
+  )
+  SET(BASE_SOURCES ${BASE_SOURCES}
+    ${CMAKE_SOURCE_DIR}/src/base/amazon_kinesis/amazon_kinesis.cpp
+  )
+ENDIF(AMAZON_KINESIS)
 
 IF(SUBSCRIBERS)
   ADD_DEFINITIONS(-DSUBSCRIBERS)

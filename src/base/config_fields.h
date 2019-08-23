@@ -58,3 +58,7 @@
 #define DEEP_LEARNING_FIELD "deep_learning"
 #define DEEP_LEARNING_OVERLAY_FIELD "deep_learning_overlay"
 #endif
+
+#if defined(AMAZON_KINESIS)
+#define AMAZON_KINESIS_FIELD "amazon_kinesis"
+#endif

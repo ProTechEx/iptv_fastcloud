@@ -470,6 +470,9 @@ bool FindOption(const std::string& key, option_t* opt) {
     {DEEP_LEARNING_FIELD, dont_validate},
     {DEEP_LEARNING_OVERLAY_FIELD, dont_validate},
 #endif
+#if defined(AMAZON_KINESIS)
+    {AMAZON_KINESIS_FIELD, dont_validate},
+#endif
     {NV_H264_ENC_PRESET, validate_nvh264_preset},
     {MFX_H264_ENC_PRESET, validate_mfxh264_preset},
     {MFX_H264_GOP_SIZE, validate_mfxh264_gopsize},
