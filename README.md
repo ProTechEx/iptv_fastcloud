@@ -7,7 +7,7 @@ About IPTV/Video cloud
 * Timeshifts
 * Catchups
 * Playlists
-* Restream from online streaming services like Youtube
+* Restream/Transcode from online streaming services like Youtube, Twitch
 * Mozaic
 * Many Outputs
 * Physical Inputs (IP Camera)
