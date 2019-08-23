@@ -74,6 +74,7 @@
 #define VIDEO_SCALE "videoscale"
 #define VIDEO_RATE "videorate"
 #define MULTIFILE_SINK "multifilesink"
+#define KVS_SINK "kvssink"
 
 #define NV_H264_ENC "nvh264enc"
 #define NV_H264_ENC_PARAM(x) NV_H264_ENC "." x

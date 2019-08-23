@@ -122,7 +122,8 @@ PLUGINS = ["decodebin",
            "mfxh264dec",
            "tinyyolov2",
            "tinyyolov3",
-           "detectionoverlay"]
+           "detectionoverlay",
+           "kvssink"]
 
 
 def check_plugins():
