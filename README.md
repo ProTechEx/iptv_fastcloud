@@ -1,7 +1,7 @@
 About IPTV/Video cloud
 ===============
 ### Features:
-* Cross-platform (Linux, MacOSX, FreeBSD, Raspbian, AWS)
+* Cross-platform (Linux, MacOSX, FreeBSD, Raspbian)
 * GPU/CPU Encode/Decode/Post Processing
 * Relays
 * Timeshifts
