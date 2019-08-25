@@ -38,7 +38,9 @@ class ISubscribeFinder;
 }
 #endif
 
+#if LIBEV_CHILD_ENABLE
 class Child;
+#endif
 class ProtocoledDaemonClient;
 
 class ProcessSlaveWrapper : public common::libev::IoLoopObserver, public server::base::IHttpRequestsObserver {
@@ -94,7 +96,9 @@ class ProcessSlaveWrapper : public common::libev::IoLoopObserver, public server:
 
   static stream_exec_t GetStartStreamFunction(const std::string& lib_full_path) WARN_UNUSED_RESULT;
 
+#if LIBEV_CHILD_ENABLE
   Child* FindChildByID(stream_id_t cid) const;
+#endif
   void BroadcastClients(const fastotv::protocol::request_t& req);
 
   common::ErrnoError DaemonDataReceived(ProtocoledDaemonClient* dclient) WARN_UNUSED_RESULT;

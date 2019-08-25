@@ -600,6 +600,7 @@ void ProcessSlaveWrapper::ChildStatusChanged(common::libev::IoChild* child, int 
 }
 #endif
 
+#if LIBEV_CHILD_ENABLE
 Child* ProcessSlaveWrapper::FindChildByID(stream_id_t cid) const {
   auto childs = loop_->GetChilds();
   for (auto* child : childs) {
@@ -611,6 +612,7 @@ Child* ProcessSlaveWrapper::FindChildByID(stream_id_t cid) const {
 
   return nullptr;
 }
+#endif
 
 void ProcessSlaveWrapper::BroadcastClients(const fastotv::protocol::request_t& req) {
   std::vector<common::libev::IoClient*> clients = loop_->GetClients();
