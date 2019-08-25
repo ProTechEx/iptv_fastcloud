@@ -19,7 +19,6 @@
 namespace fastocloud {
 namespace server {
 
-#if LIBEV_CHILD_ENABLE
 class ChildStream : public Child {
  public:
   typedef Child base_class;
@@ -31,7 +30,6 @@ class ChildStream : public Child {
   const stream_id_t id_;
   DISALLOW_COPY_AND_ASSIGN(ChildStream);
 };
-#endif
 
 }  // namespace server
 }  // namespace fastocloud

@@ -26,14 +26,14 @@ namespace server {
 
 #if LIBEV_CHILD_ENABLE
 class Child : public common::libev::IoChild {
- public:
-  enum Type : uint8_t { STREAM = 0 };
+#else
+class Child {
+#endif
 
-  typedef common::libev::IoChild base_class;
+ public:
   typedef fastotv::protocol::protocol_client_t client_t;
 
   virtual stream_id_t GetStreamID() const = 0;
-  Type GetType() const;
 
   common::ErrnoError Stop() WARN_UNUSED_RESULT;
   common::ErrnoError Restart() WARN_UNUSED_RESULT;
@@ -42,16 +42,14 @@ class Child : public common::libev::IoChild {
   void SetClient(client_t* pipe);
 
  protected:
-  Child(common::libev::IoLoop* server, Type type);
+  explicit Child(common::libev::IoLoop* server);
 
   fastotv::protocol::sequance_id_t NextRequestID();
 
  private:
-  Type type_;
   client_t* client_;
   std::atomic<fastotv::protocol::seq_id_t> id_;
 };
-#endif
 
 }  // namespace server
 }  // namespace fastocloud

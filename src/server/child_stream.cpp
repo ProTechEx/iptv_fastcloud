@@ -14,18 +14,14 @@
 
 #include "server/child_stream.h"
 
-#include "base/stream_struct.h"
-
 namespace fastocloud {
 namespace server {
 
-#if LIBEV_CHILD_ENABLE
-ChildStream::ChildStream(common::libev::IoLoop* server, const stream_id_t& id) : base_class(server, STREAM), id_(id) {}
+ChildStream::ChildStream(common::libev::IoLoop* server, const stream_id_t& id) : base_class(server), id_(id) {}
 
 stream_id_t ChildStream::GetStreamID() const {
   return id_;
 }
-#endif
 
 }  // namespace server
 }  // namespace fastocloud
