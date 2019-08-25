@@ -24,7 +24,7 @@
 
 namespace {
 
-const size_t kMaxSizeLogFile = 1024 * 1024;  // 1 MB
+const size_t kMaxSizeLogFile = 1024 * 1024;
 
 int start_stream(const std::string& process_name,
                  const common::file_system::ascii_directory_string_path& feedback_dir,
@@ -35,7 +35,8 @@ int start_stream(const std::string& process_name,
                  fastocloud::StreamStruct* mem) {
   auto log_file = feedback_dir.MakeFileStringPath(LOGS_FILE_NAME);
   if (log_file) {
-    common::logging::INIT_LOGGER(process_name, log_file->GetPath(), logs_level);  // initialization of logging system
+    common::logging::INIT_LOGGER(process_name, log_file->GetPath(), logs_level,
+                                 kMaxSizeLogFile);  // initialization of logging system
   }
   NOTICE_LOG() << "Running " PROJECT_VERSION_HUMAN;
 

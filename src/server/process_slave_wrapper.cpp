@@ -55,7 +55,7 @@
 #include "server/vods/handler.h"
 #include "server/vods/server.h"
 
-#include "stream/stream_wrapper.h"
+#include "stream/cmd_args.h"
 #include "stream_commands/commands.h"
 
 #include "utils/m3u8_reader.h"
@@ -600,9 +600,9 @@ void ProcessSlaveWrapper::ChildStatusChanged(common::libev::IoChild* child, int 
 }
 #endif
 
-#if LIBEV_CHILD_ENABLE
 Child* ProcessSlaveWrapper::FindChildByID(stream_id_t cid) const {
-  auto childs = loop_->GetChilds();
+  DaemonServer* server = static_cast<DaemonServer*>(loop_);
+  auto childs = server->GetChilds();
   for (auto* child : childs) {
     Child* channel = static_cast<Child*>(child);
     if (channel->GetStreamID() == cid) {
@@ -612,7 +612,6 @@ Child* ProcessSlaveWrapper::FindChildByID(stream_id_t cid) const {
 
   return nullptr;
 }
-#endif
 
 void ProcessSlaveWrapper::BroadcastClients(const fastotv::protocol::request_t& req) {
   std::vector<common::libev::IoClient*> clients = loop_->GetClients();
@@ -716,7 +715,8 @@ void ProcessSlaveWrapper::DataReceived(common::libev::IoClient* client) {
     common::ErrnoError err = StreamDataReceived(pipe_client);
     if (err) {
       DEBUG_MSG_ERROR(err, common::logging::LOG_LEVEL_ERR);
-      auto childs = loop_->GetChilds();
+      DaemonServer* server = static_cast<DaemonServer*>(loop_);
+      auto childs = server->GetChilds();
       for (auto* child : childs) {
         ChildStream* channel = static_cast<ChildStream*>(child);
         if (pipe_client == channel->GetClient()) {
@@ -821,7 +821,8 @@ common::ErrnoError ProcessSlaveWrapper::HandleRequestClientStopService(Protocole
       return dclient->StopFail(req->id, common::make_error("Stop service in progress..."));
     }
 
-    auto childs = loop_->GetChilds();
+    DaemonServer* server = static_cast<DaemonServer*>(loop_);
+    auto childs = server->GetChilds();
     for (auto* child : childs) {
       ChildStream* channel = static_cast<ChildStream*>(child);
       channel->Stop();
