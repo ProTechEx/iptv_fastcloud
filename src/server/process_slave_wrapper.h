@@ -89,8 +89,8 @@ class ProcessSlaveWrapper : public common::libev::IoLoopObserver, public server:
   typedef int (*stream_exec_t)(const char* process_name,
                                const void* cmd_args,
                                const void* config_args,
-                               void* command_client,
-                               void* mem);
+                               const void* mem,
+                               void* command_client);
 
   static stream_exec_t GetStartStreamFunction(const std::string& lib_full_path) WARN_UNUSED_RESULT;
 

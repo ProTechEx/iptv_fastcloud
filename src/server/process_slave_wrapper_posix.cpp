@@ -26,7 +26,7 @@
 #include <common/file_system/file_system.h>
 #include <common/file_system/string_path_utils.h>
 
-#include "base/stream_struct.h"
+#include "base/stream_info.h"
 
 #include "server/child_stream.h"
 #include "server/daemon/server.h"
@@ -132,9 +132,7 @@ common::ErrnoError ProcessSlaveWrapper::CreateChildStreamImpl(const serialized_s
     pipe::ProtocoledPipeClient* client =
         new pipe::ProtocoledPipeClient(nullptr, read_command_client, write_responce_client);
     client->SetName(sha.id);
-    StreamStruct* mem = new StreamStruct(sha);
-    int res = stream_exec_func_(new_name, &client_args, &config_args, client, mem);
-    delete mem;
+    int res = stream_exec_func_(new_name, &client_args, &config_args, &sha, client);
     client->Close();
     delete client;
     _exit(res);

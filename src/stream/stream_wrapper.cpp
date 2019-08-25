@@ -32,7 +32,7 @@ int start_stream(const std::string& process_name,
                  common::logging::LOG_LEVEL logs_level,
                  const fastocloud::StreamConfig& config_args,
                  fastotv::protocol::protocol_client_t* command_client,
-                 fastocloud::StreamStruct* mem) {
+                 const fastocloud::StreamInfo& sha) {
   auto log_file = feedback_dir.MakeFileStringPath(LOGS_FILE_NAME);
   if (log_file) {
     common::logging::INIT_LOGGER(process_name, log_file->GetPath(), logs_level,
@@ -40,7 +40,8 @@ int start_stream(const std::string& process_name,
   }
   NOTICE_LOG() << "Running " PROJECT_VERSION_HUMAN;
 
-  fastocloud::stream::StreamController proc(feedback_dir, streamlink_path, command_client, mem);
+  const std::unique_ptr<fastocloud::StreamStruct> mem(new fastocloud::StreamStruct(sha));
+  fastocloud::stream::StreamController proc(feedback_dir, streamlink_path, command_client, mem.get());
   common::Error err = proc.Init(config_args);
   if (err) {
     WARNING_LOG() << err->GetDescription();
@@ -58,9 +59,9 @@ int start_stream(const std::string& process_name,
 int stream_exec(const char* process_name,
                 const cmd_args* args,
                 const void* config_args,
-                void* command_client,
-                void* mem) {
-  if (!process_name || !args || !config_args || !command_client || !mem) {
+                const void* sha,
+                void* command_client) {
+  if (!process_name || !args || !config_args || !command_client || !sha) {
     CRITICAL_LOG() << "Invalid arguments.";
     return EXIT_FAILURE;
   }
@@ -80,8 +81,8 @@ int stream_exec(const char* process_name,
   const fastocloud::StreamConfig* config_args_map = static_cast<const fastocloud::StreamConfig*>(config_args);
   common::logging::LOG_LEVEL logs_level = static_cast<common::logging::LOG_LEVEL>(args->log_level);
   fastotv::protocol::protocol_client_t* client = static_cast<fastotv::protocol::protocol_client_t*>(command_client);
-  fastocloud::StreamStruct* smem = static_cast<fastocloud::StreamStruct*>(mem);
+  const fastocloud::StreamInfo* smem = static_cast<const fastocloud::StreamInfo*>(sha);
   return start_stream(process_name, common::file_system::ascii_directory_string_path(feedback_dir_ptr),
                       common::file_system::ascii_file_string_path(streamlink_path_ptr), logs_level, *config_args_map,
-                      client, smem);
+                      client, *smem);
 }

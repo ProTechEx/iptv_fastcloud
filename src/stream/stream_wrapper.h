@@ -19,5 +19,5 @@
 extern "C" int stream_exec(const char* process_name,
                            const cmd_args* args,
                            const void* config_args,
-                           void* command_client,
-                           void* mem);
+                           const void* sha,
+                           void* command_client);
