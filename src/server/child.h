@@ -40,6 +40,7 @@ class Child {
 
   client_t* GetClient() const;
   void SetClient(client_t* pipe);
+  virtual ~Child();
 
  protected:
   explicit Child(common::libev::IoLoop* server);

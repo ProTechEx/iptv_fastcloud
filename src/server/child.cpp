@@ -25,6 +25,8 @@ Child::Child(common::libev::IoLoop* server) : IoChild(server), client_(nullptr),
 Child::Child(common::libev::IoLoop* server) : client_(nullptr), id_(0) {}
 #endif
 
+Child::~Child() {}
+
 Child::client_t* Child::GetClient() const {
   return client_;
 }
