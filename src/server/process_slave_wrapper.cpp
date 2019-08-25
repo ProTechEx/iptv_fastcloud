@@ -332,7 +332,7 @@ int ProcessSlaveWrapper::SendStopDaemonRequest(const std::string& license) {
 
   const common::net::HostAndPort host = Config::GetDefaultHost();
   common::net::socket_info client_info;
-  common::ErrnoError err = common::net::connect(host, common::net::ST_SOCK_STREAM, 0, &client_info);
+  common::ErrnoError err = common::net::connect(host, common::net::ST_SOCK_STREAM, nullptr, &client_info);
   if (err) {
     return EXIT_FAILURE;
   }
