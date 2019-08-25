@@ -14,15 +14,6 @@
 
 #include "server/process_slave_wrapper.h"
 
-#if defined(OS_LINUX)
-#include <sys/prctl.h>
-#endif
-
-#if defined(OS_POSIX)
-#include <dlfcn.h>
-#include <sys/wait.h>
-#endif
-
 #include <string>
 #include <thread>
 #include <utility>
@@ -38,8 +29,6 @@
 #include "base/inputs_outputs.h"
 
 #include "gpu_stats/perf_monitor.h"
-
-#include "pipe/pipe_client.h"
 
 #include "server/child_stream.h"
 #include "server/daemon/client.h"
@@ -152,22 +141,6 @@ common::Error PostHttpFile(const common::file_system::ascii_file_string_path& fi
 
   cl.Disconnect();
   return common::Error();
-}
-
-common::ErrnoError CreatePipe(int* read_client_fd, int* write_client_fd) {
-  if (!read_client_fd || !write_client_fd) {
-    return common::make_errno_error_inval();
-  }
-
-  int pipefd[2] = {0};
-  int res = pipe(pipefd);
-  if (res == ERROR_RESULT_VALUE) {
-    return common::make_errno_error(errno);
-  }
-
-  *read_client_fd = pipefd[0];
-  *write_client_fd = pipefd[1];
-  return common::ErrnoError();
 }
 
 }  // namespace
@@ -394,18 +367,8 @@ ProcessSlaveWrapper::~ProcessSlaveWrapper() {
 int ProcessSlaveWrapper::Exec(int argc, char** argv) {
   const std::string absolute_source_dir = common::file_system::absolute_path_from_relative(RELATIVE_SOURCE_DIR);
   const std::string lib_full_path = common::file_system::make_path(absolute_source_dir, CORE_LIBRARY);
-  void* handle = dlopen(lib_full_path.c_str(), RTLD_LAZY);
-  if (!handle) {
-    ERROR_LOG() << "Failed to load " CORE_LIBRARY " path: " << lib_full_path
-                << ", error: " << common::common_strerror(errno);
-    return EXIT_FAILURE;
-  }
-
-  stream_exec_func_ = reinterpret_cast<stream_exec_t>(dlsym(handle, "stream_exec"));
-  char* error = dlerror();
-  if (error) {
-    ERROR_LOG() << "Failed to load start stream function error: " << error;
-    dlclose(handle);
+  stream_exec_func_ = GetStartStreamFunction(lib_full_path);
+  if (!stream_exec_func_) {
     return EXIT_FAILURE;
   }
 
@@ -528,7 +491,6 @@ finished:
   }
   delete perf_monitor;
   stream_exec_func_ = nullptr;
-  dlclose(handle);
   return res;
 }
 
@@ -702,7 +664,7 @@ common::ErrnoError ProcessSlaveWrapper::DaemonDataReceived(ProtocoledDaemonClien
   return common::ErrnoError();
 }
 
-common::ErrnoError ProcessSlaveWrapper::PipeDataReceived(pipe::ProtocoledPipeClient* pipe_client) {
+common::ErrnoError ProcessSlaveWrapper::StreamDataReceived(stream_client_t* pipe_client) {
   CHECK(loop_->IsLoopThread());
   std::string input_command;
   common::ErrnoError err = pipe_client->ReadCommand(&input_command);
@@ -748,8 +710,8 @@ void ProcessSlaveWrapper::DataReceived(common::libev::IoClient* client) {
       dclient->Close();
       delete dclient;
     }
-  } else if (pipe::ProtocoledPipeClient* pipe_client = dynamic_cast<pipe::ProtocoledPipeClient*>(client)) {
-    common::ErrnoError err = PipeDataReceived(pipe_client);
+  } else if (stream_client_t* pipe_client = dynamic_cast<stream_client_t*>(client)) {
+    common::ErrnoError err = StreamDataReceived(pipe_client);
     if (err) {
       DEBUG_MSG_ERROR(err, common::logging::LOG_LEVEL_ERR);
       auto childs = loop_->GetChilds();
@@ -914,90 +876,10 @@ common::ErrnoError ProcessSlaveWrapper::CreateChildStream(const serialized_strea
     return common::make_errno_error(common::MemSPrintf("Stream with id: %s exist, skip request.", sha.id), EINVAL);
   }
 
-  int read_command_client = 0;
-  int write_requests_client = 0;
-  err = CreatePipe(&read_command_client, &write_requests_client);
-  if (err) {
-    return err;
-  }
-
-  int read_responce_client = 0;
-  int write_responce_client = 0;
-  err = CreatePipe(&read_responce_client, &write_responce_client);
-  if (err) {
-    return err;
-  }
-
-#if !defined(TEST)
-  pid_t pid = fork();
-#else
-  pid_t pid = 0;
-#endif
-  if (pid == 0) {  // child
-    const std::string new_process_name = common::MemSPrintf(STREAMER_NAME "_%s", sha.id);
-    const char* new_name = new_process_name.c_str();
-#if defined(OS_LINUX)
-    for (int i = 0; i < process_argc_; ++i) {
-      memset(process_argv_[i], 0, strlen(process_argv_[i]));
-    }
-    char* app_name = process_argv_[0];
-    strncpy(app_name, new_name, new_process_name.length());
-    app_name[new_process_name.length()] = 0;
-    prctl(PR_SET_NAME, new_name);
-#elif defined(OS_FREEBSD)
-    setproctitle(new_name);
-#else
-#pragma message "Please implement"
-#endif
-
-#if !defined(TEST)
-    // close not needed pipes
-    common::ErrnoError errn = common::file_system::close_descriptor(read_responce_client);
-    if (errn) {
-      DEBUG_MSG_ERROR(errn, common::logging::LOG_LEVEL_WARNING);
-    }
-    errn = common::file_system::close_descriptor(write_requests_client);
-    if (errn) {
-      DEBUG_MSG_ERROR(errn, common::logging::LOG_LEVEL_WARNING);
-    }
-#endif
-
-    const struct cmd_args client_args = {feedback_dir.c_str(), logs_level, config_.streamlink_path.c_str()};
-    pipe::ProtocoledPipeClient* client =
-        new pipe::ProtocoledPipeClient(nullptr, read_command_client, write_responce_client);
-    client->SetName(sha.id);
-    StreamStruct* mem = new StreamStruct(sha);
-    int res = stream_exec_func_(new_name, &client_args, &config_args, client, mem);
-    delete mem;
-    client->Close();
-    delete client;
-    _exit(res);
-  } else if (pid < 0) {
-    NOTICE_LOG() << "Failed to start children!";
-  } else {
-    // close not needed pipes
-    common::ErrnoError errn = common::file_system::close_descriptor(read_command_client);
-    if (errn) {
-      DEBUG_MSG_ERROR(errn, common::logging::LOG_LEVEL_WARNING);
-    }
-    errn = common::file_system::close_descriptor(write_responce_client);
-    if (err) {
-      DEBUG_MSG_ERROR(errn, common::logging::LOG_LEVEL_WARNING);
-    }
-
-    pipe::ProtocoledPipeClient* pipe_client =
-        new pipe::ProtocoledPipeClient(loop_, read_responce_client, write_requests_client);
-    pipe_client->SetName(sha.id);
-    loop_->RegisterClient(pipe_client);
-    ChildStream* new_channel = new ChildStream(loop_, sha.id);
-    new_channel->SetClient(pipe_client);
-    loop_->RegisterChild(new_channel, pid);
-  }
-
-  return common::ErrnoError();
+  return CreateChildStreamImpl(config_args, sha, feedback_dir, logs_level);
 }
 
-common::ErrnoError ProcessSlaveWrapper::HandleRequestChangedSourcesStream(pipe::ProtocoledPipeClient* pclient,
+common::ErrnoError ProcessSlaveWrapper::HandleRequestChangedSourcesStream(stream_client_t* pclient,
                                                                           fastotv::protocol::request_t* req) {
   UNUSED(pclient);
   CHECK(loop_->IsLoopThread());
@@ -1030,7 +912,7 @@ common::ErrnoError ProcessSlaveWrapper::HandleRequestChangedSourcesStream(pipe::
   return common::make_errno_error_inval();
 }
 
-common::ErrnoError ProcessSlaveWrapper::HandleRequestStatisticStream(pipe::ProtocoledPipeClient* pclient,
+common::ErrnoError ProcessSlaveWrapper::HandleRequestStatisticStream(stream_client_t* pclient,
                                                                      fastotv::protocol::request_t* req) {
   UNUSED(pclient);
   CHECK(loop_->IsLoopThread());
@@ -1210,22 +1092,22 @@ common::ErrnoError ProcessSlaveWrapper::HandleRequestClientGetPipelineStream(Pro
 
   if (req->params) {
     const char* params_ptr = req->params->c_str();
-    json_object* jgetlog_info = json_tokener_parse(params_ptr);
-    if (!jgetlog_info) {
+    json_object* jgetpipe_info = json_tokener_parse(params_ptr);
+    if (!jgetpipe_info) {
       return common::make_errno_error_inval();
     }
 
-    stream::GetLogInfo log_info;
-    common::Error err_des = log_info.DeSerialize(jgetlog_info);
-    json_object_put(jgetlog_info);
+    stream::GetLogInfo pipeline_info;
+    common::Error err_des = pipeline_info.DeSerialize(jgetpipe_info);
+    json_object_put(jgetpipe_info);
     if (err_des) {
       const std::string err_str = err_des->GetDescription();
       return common::make_errno_error(err_str, EAGAIN);
     }
 
-    const auto remote_log_path = log_info.GetLogPath();
+    const auto remote_log_path = pipeline_info.GetLogPath();
     if (remote_log_path.GetScheme() == common::uri::Url::http) {
-      const auto stream_log_file = MakeStreamPipelinePath(log_info.GetFeedbackDir());
+      const auto stream_log_file = MakeStreamPipelinePath(pipeline_info.GetFeedbackDir());
       if (stream_log_file) {
         PostHttpFile(*stream_log_file, remote_log_path);
       }
@@ -1514,7 +1396,7 @@ common::ErrnoError ProcessSlaveWrapper::HandleResponceServiceCommand(ProtocoledD
   return common::ErrnoError();
 }
 
-common::ErrnoError ProcessSlaveWrapper::HandleRequestStreamsCommand(pipe::ProtocoledPipeClient* pclient,
+common::ErrnoError ProcessSlaveWrapper::HandleRequestStreamsCommand(stream_client_t* pclient,
                                                                     fastotv::protocol::request_t* req) {
   if (req->method == CHANGED_SOURCES_STREAM) {
     return HandleRequestChangedSourcesStream(pclient, req);
@@ -1526,7 +1408,7 @@ common::ErrnoError ProcessSlaveWrapper::HandleRequestStreamsCommand(pipe::Protoc
   return common::ErrnoError();
 }
 
-common::ErrnoError ProcessSlaveWrapper::HandleResponceStreamsCommand(pipe::ProtocoledPipeClient* pclient,
+common::ErrnoError ProcessSlaveWrapper::HandleResponceStreamsCommand(stream_client_t* pclient,
                                                                      fastotv::protocol::response_t* resp) {
   fastotv::protocol::request_t req;
   if (pclient->PopRequestByID(resp->id, &req)) {

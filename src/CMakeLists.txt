@@ -22,6 +22,7 @@ SET(BASE_HEADERS
   ${CMAKE_SOURCE_DIR}/src/base/http_proxy.h
   ${CMAKE_SOURCE_DIR}/src/base/inputs_outputs.h
   ${CMAKE_SOURCE_DIR}/src/base/channel_stats.h
+  ${CMAKE_SOURCE_DIR}/src/base/stream_info.h
   ${CMAKE_SOURCE_DIR}/src/base/stream_struct.h
 )
 
@@ -38,6 +39,7 @@ SET(BASE_SOURCES
   ${CMAKE_SOURCE_DIR}/src/base/http_proxy.cpp
   ${CMAKE_SOURCE_DIR}/src/base/inputs_outputs.cpp
   ${CMAKE_SOURCE_DIR}/src/base/channel_stats.cpp
+  ${CMAKE_SOURCE_DIR}/src/base/stream_info.cpp
   ${CMAKE_SOURCE_DIR}/src/base/stream_struct.cpp
 )
 

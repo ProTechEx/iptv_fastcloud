@@ -22,19 +22,11 @@
 #include "base/channel_stats.h"
 #include "base/types.h"
 
+#include "base/stream_info.h"
+
 namespace fastocloud {
 
 enum StreamStatus { NEW = 0, INIT = 1, STARTED = 2, READY = 3, PLAYING = 4, FROZEN = 5, WAITING = 6 };
-
-typedef std::vector<ChannelStats> input_channels_info_t;
-typedef std::vector<ChannelStats> output_channels_info_t;
-
-struct StreamInfo {
-  stream_id_t id;
-  StreamType type;
-  std::vector<channel_id_t> input;
-  std::vector<channel_id_t> output;
-};
 
 struct StreamStruct {
   StreamStruct();

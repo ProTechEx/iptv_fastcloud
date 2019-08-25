@@ -20,9 +20,11 @@
 #include <common/libev/io_loop_observer.h>
 #include <common/net/types.h>
 
+#include <fastotv/protocol/protocol.h>
 #include <fastotv/protocol/types.h>
 
 #include "base/stream_config.h"
+#include "base/stream_info.h"
 #include "base/types.h"
 
 #include "server/base/ihttp_requests_observer.h"
@@ -30,9 +32,6 @@
 
 namespace fastocloud {
 namespace server {
-namespace pipe {
-class ProtocoledPipeClient;
-}
 #if defined(SUBSCRIBERS)
 namespace subscribers {
 class ISubscribeFinder;
@@ -46,6 +45,7 @@ class ProcessSlaveWrapper : public common::libev::IoLoopObserver, public server:
  public:
   enum { node_stats_send_seconds = 10, ping_timeout_clients_seconds = 60, cleanup_seconds = 3 };
   typedef StreamConfig serialized_stream_t;
+  typedef fastotv::protocol::protocol_client_t stream_client_t;
 
   explicit ProcessSlaveWrapper(const std::string& licensy_key, const Config& config);
   ~ProcessSlaveWrapper() override;
@@ -80,9 +80,9 @@ class ProcessSlaveWrapper : public common::libev::IoLoopObserver, public server:
   virtual common::ErrnoError HandleResponceServiceCommand(ProtocoledDaemonClient* dclient,
                                                           fastotv::protocol::response_t* resp) WARN_UNUSED_RESULT;
 
-  virtual common::ErrnoError HandleRequestStreamsCommand(pipe::ProtocoledPipeClient* pclient,
+  virtual common::ErrnoError HandleRequestStreamsCommand(stream_client_t* pclient,
                                                          fastotv::protocol::request_t* req) WARN_UNUSED_RESULT;
-  virtual common::ErrnoError HandleResponceStreamsCommand(pipe::ProtocoledPipeClient* pclient,
+  virtual common::ErrnoError HandleResponceStreamsCommand(stream_client_t* pclient,
                                                           fastotv::protocol::response_t* resp) WARN_UNUSED_RESULT;
 
  private:
@@ -92,19 +92,25 @@ class ProcessSlaveWrapper : public common::libev::IoLoopObserver, public server:
                                void* command_client,
                                void* mem);
 
+  static stream_exec_t GetStartStreamFunction(const std::string& lib_full_path) WARN_UNUSED_RESULT;
+
   Child* FindChildByID(stream_id_t cid) const;
   void BroadcastClients(const fastotv::protocol::request_t& req);
 
   common::ErrnoError DaemonDataReceived(ProtocoledDaemonClient* dclient) WARN_UNUSED_RESULT;
-  common::ErrnoError PipeDataReceived(pipe::ProtocoledPipeClient* pclient) WARN_UNUSED_RESULT;
+  common::ErrnoError StreamDataReceived(stream_client_t* pclient) WARN_UNUSED_RESULT;
 
   common::ErrnoError CreateChildStream(const serialized_stream_t& config_args);
+  common::ErrnoError CreateChildStreamImpl(const serialized_stream_t& config_args,
+                                           const StreamInfo& sha,
+                                           const std::string& feedback_dir,
+                                           common::logging::LOG_LEVEL logs_level);
 
   // stream
-  common::ErrnoError HandleRequestChangedSourcesStream(pipe::ProtocoledPipeClient* pclient,
+  common::ErrnoError HandleRequestChangedSourcesStream(stream_client_t* pclient,
                                                        fastotv::protocol::request_t* req) WARN_UNUSED_RESULT;
 
-  common::ErrnoError HandleRequestStatisticStream(pipe::ProtocoledPipeClient* pclient,
+  common::ErrnoError HandleRequestStatisticStream(stream_client_t* pclient,
                                                   fastotv::protocol::request_t* req) WARN_UNUSED_RESULT;
 
   common::ErrnoError HandleRequestClientStartStream(ProtocoledDaemonClient* dclient,

@@ -22,7 +22,7 @@ namespace fastocloud {
 namespace server {
 namespace pipe {
 
-class ProtocoledPipeClient : public fastotv::protocol::ProtocolClient<common::libev::IoClient> {
+class ProtocoledPipeClient : public fastotv::protocol::protocol_client_t {
  public:
   typedef fastotv::protocol::ProtocolClient<common::libev::IoClient> base_class;
   ~ProtocoledPipeClient() override;
