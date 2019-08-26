@@ -65,7 +65,7 @@ class SubscribersHandler : public base::IServerHandler {
   void TimerEmited(common::libev::IoLoop* server, common::libev::timer_id_t id) override;
   void Accepted(common::libev::IoChild* child) override;
   void Moved(common::libev::IoLoop* server, common::libev::IoChild* child) override;
-  void ChildStatusChanged(common::libev::IoChild* client, int status) override;
+  void ChildStatusChanged(common::libev::IoChild* client, int status, int signal) override;
 
   virtual ~SubscribersHandler();
 

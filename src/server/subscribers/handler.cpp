@@ -79,7 +79,6 @@ void SubscribersHandler::TimerEmited(common::libev::IoLoop* server, common::libe
   base_class::TimerEmited(server, id);
 }
 
-#if LIBEV_CHILD_ENABLE
 void SubscribersHandler::Accepted(common::libev::IoChild* child) {
   base_class::Accepted(child);
 }
@@ -88,10 +87,9 @@ void SubscribersHandler::Moved(common::libev::IoLoop* server, common::libev::IoC
   base_class::Moved(server, child);
 }
 
-void SubscribersHandler::ChildStatusChanged(common::libev::IoChild* client, int status) {
-  base_class::ChildStatusChanged(client, status);
+void SubscribersHandler::ChildStatusChanged(common::libev::IoChild* client, int status, int signal) {
+  base_class::ChildStatusChanged(client, status, signal);
 }
-#endif
 
 void SubscribersHandler::Accepted(common::libev::IoClient* client) {
   base_class::Accepted(client);
