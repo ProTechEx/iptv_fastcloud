@@ -56,26 +56,6 @@ common::ErrnoError CreatePipe(int* read_client_fd, int* write_client_fd) {
 namespace fastocloud {
 namespace server {
 
-ProcessSlaveWrapper::stream_exec_t ProcessSlaveWrapper::GetStartStreamFunction(const std::string& lib_full_path) {
-  void* handle = dlopen(lib_full_path.c_str(), RTLD_LAZY);
-  if (!handle) {
-    ERROR_LOG() << "Failed to load " CORE_LIBRARY " path: " << lib_full_path
-                << ", error: " << common::common_strerror(errno);
-    return nullptr;
-  }
-
-  stream_exec_t stream_exec_func = reinterpret_cast<stream_exec_t>(dlsym(handle, "stream_exec"));
-  char* error = dlerror();
-  if (error) {
-    ERROR_LOG() << "Failed to load start stream function error: " << error;
-    dlclose(handle);
-    return nullptr;
-  }
-
-  dlclose(handle);
-  return stream_exec_func;
-}
-
 common::ErrnoError ProcessSlaveWrapper::CreateChildStreamImpl(const serialized_stream_t& config_args,
                                                               const StreamInfo& sha,
                                                               const std::string& feedback_dir,
@@ -100,6 +80,25 @@ common::ErrnoError ProcessSlaveWrapper::CreateChildStreamImpl(const serialized_s
   pid_t pid = 0;
 #endif
   if (pid == 0) {  // child
+    typedef int (*stream_exec_t)(const char* process_name, const void* cmd_args, const void* config_args,
+                                 const void* mem, void* command_client);
+
+    const std::string absolute_source_dir = common::file_system::absolute_path_from_relative(RELATIVE_SOURCE_DIR);
+    const std::string lib_full_path = common::file_system::make_path(absolute_source_dir, CORE_LIBRARY);
+    void* handle = dlopen(lib_full_path.c_str(), RTLD_LAZY);
+    if (!handle) {
+      ERROR_LOG() << "Failed to load " CORE_LIBRARY " path: " << lib_full_path << ", error: " << dlerror();
+      _exit(EXIT_FAILURE);
+    }
+
+    stream_exec_t stream_exec_func = reinterpret_cast<stream_exec_t>(dlsym(handle, "stream_exec"));
+    char* error = dlerror();
+    if (error) {
+      ERROR_LOG() << "Failed to load start stream function error: " << error;
+      dlclose(handle);
+      _exit(EXIT_FAILURE);
+    }
+
     const std::string new_process_name = common::MemSPrintf(STREAMER_NAME "_%s", sha.id);
     const char* new_name = new_process_name.c_str();
 #if defined(OS_LINUX)
@@ -132,9 +131,10 @@ common::ErrnoError ProcessSlaveWrapper::CreateChildStreamImpl(const serialized_s
     pipe::ProtocoledPipeClient* client =
         new pipe::ProtocoledPipeClient(nullptr, read_command_client, write_responce_client);
     client->SetName(sha.id);
-    int res = stream_exec_func_(new_name, &client_args, &config_args, &sha, client);
+    int res = stream_exec_func(new_name, &client_args, &config_args, &sha, client);
     client->Close();
     delete client;
+    dlclose(handle);
     _exit(res);
   } else if (pid < 0) {
     ERROR_LOG() << "Failed to start children!";

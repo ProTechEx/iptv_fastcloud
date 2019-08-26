@@ -299,7 +299,6 @@ ProcessSlaveWrapper::ProcessSlaveWrapper(const std::string& license_key, const C
       cleanup_files_timer_(INVALID_TIMER_ID),
       quit_cleanup_timer_(INVALID_TIMER_ID),
       node_stats_(new NodeStats),
-      stream_exec_func_(nullptr),
       vods_links_(),
       cods_links_() {
   loop_ = new DaemonServer(config.host, this);
@@ -365,13 +364,6 @@ ProcessSlaveWrapper::~ProcessSlaveWrapper() {
 }
 
 int ProcessSlaveWrapper::Exec(int argc, char** argv) {
-  const std::string absolute_source_dir = common::file_system::absolute_path_from_relative(RELATIVE_SOURCE_DIR);
-  const std::string lib_full_path = common::file_system::make_path(absolute_source_dir, CORE_LIBRARY);
-  stream_exec_func_ = GetStartStreamFunction(lib_full_path);
-  if (!stream_exec_func_) {
-    return EXIT_FAILURE;
-  }
-
   process_argc_ = argc;
   process_argv_ = argv;
 
@@ -490,7 +482,6 @@ finished:
     perf_thread.join();
   }
   delete perf_monitor;
-  stream_exec_func_ = nullptr;
   return res;
 }
 
@@ -586,7 +577,6 @@ void ProcessSlaveWrapper::ChildStatusChanged(common::libev::IoChild* child, int 
 
   loop_->UnRegisterChild(child);
 
-  DCHECK(!channel->GetClient()) << "In this place client should be nulled.";
   delete channel;
 
   stream::QuitStatusInfo ch_status_info(sid, !stabled_status, signal_number);  // reverse status

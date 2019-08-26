@@ -86,14 +86,6 @@ class ProcessSlaveWrapper : public common::libev::IoLoopObserver, public server:
                                                           fastotv::protocol::response_t* resp) WARN_UNUSED_RESULT;
 
  private:
-  typedef int (*stream_exec_t)(const char* process_name,
-                               const void* cmd_args,
-                               const void* config_args,
-                               const void* mem,
-                               void* command_client);
-
-  static stream_exec_t GetStartStreamFunction(const std::string& lib_full_path) WARN_UNUSED_RESULT;
-
   Child* FindChildByID(stream_id_t cid) const;
   void BroadcastClients(const fastotv::protocol::request_t& req);
 
@@ -174,7 +166,6 @@ class ProcessSlaveWrapper : public common::libev::IoLoopObserver, public server:
   common::libev::timer_id_t cleanup_files_timer_;
   common::libev::timer_id_t quit_cleanup_timer_;
   NodeStats* node_stats_;
-  stream_exec_t stream_exec_func_;
 
   std::map<common::file_system::ascii_directory_string_path, serialized_stream_t> vods_links_;
   std::map<common::file_system::ascii_directory_string_path, serialized_stream_t> cods_links_;
