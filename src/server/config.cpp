@@ -47,7 +47,7 @@ std::pair<std::string, std::string> GetKeyValue(const std::string& line, char se
   return std::make_pair(line, std::string());
 }
 
-common::ErrnoError ReadSlaveConfig(const std::string& path, common::HashValue** args) {
+common::ErrnoError ReadConfigFile(const std::string& path, common::HashValue** args) {
   if (!args) {
     return common::make_errno_error_inval();
   }
@@ -58,7 +58,7 @@ common::ErrnoError ReadSlaveConfig(const std::string& path, common::HashValue** 
 
   std::ifstream config(path);
   if (!config.is_open()) {
-    return common::make_errno_error("Failed to open config path: " + path, EINVAL);
+    return common::make_errno_error("Failed to open config file", EINVAL);
   }
 
   common::HashValue* options = new common::HashValue;
@@ -120,7 +120,7 @@ common::ErrnoError load_config_from_file(const std::string& config_absolute_path
 
   Config lconfig;
   common::HashValue* slave_config_args = nullptr;
-  common::ErrnoError err = ReadSlaveConfig(config_absolute_path, &slave_config_args);
+  common::ErrnoError err = ReadConfigFile(config_absolute_path, &slave_config_args);
   if (err) {
     return err;
   }

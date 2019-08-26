@@ -97,8 +97,7 @@ int main(int argc, char** argv, char** envp) {
   fastocloud::server::Config config;
   common::ErrnoError err = fastocloud::server::load_config_from_file(CONFIG_PATH, &config);
   if (err) {
-    std::cerr << err->GetDescription() << std::endl;
-    return EXIT_FAILURE;
+    std::cerr << "Can't read config file path: " << CONFIG_PATH << std::endl;
   }
 
   if (run_as_daemon) {
