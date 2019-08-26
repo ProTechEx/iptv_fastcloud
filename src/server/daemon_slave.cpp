@@ -176,6 +176,12 @@ int main(int argc, char** argv, char** envp) {
     return EXIT_FAILURE;
   }
 
+  err = pidfile.Close();
+  if (err) {
+    ERROR_LOG() << "Failed to close pidfile: " << PIDFILE_PATH << "; message: " << err->GetDescription();
+    return EXIT_FAILURE;
+  }
+
   err = common::file_system::remove_file(PIDFILE_PATH);
   if (err) {
     WARNING_LOG() << "Can't remove file: " << PIDFILE_PATH << ", error: " << err->GetDescription();

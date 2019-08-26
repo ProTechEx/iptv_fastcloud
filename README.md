@@ -1,14 +1,14 @@
 About IPTV/Video cloud
 ===============
 ### Features:
-* Cross-platform (Linux, MacOSX, FreeBSD, Raspbian/Armbian)
+* Cross-platform (Linux, MacOSX, FreeBSD, Raspbian/Armbian, Windows)
 * GPU/CPU Encode/Decode/Post Processing
 * Relays
 * Timeshifts
 * Catchups
 * Playlists
-* Restream/Transcode from online streaming services like Youtube, Twitch
-* Mozaic
+* Restream/Transcode from online streaming services like YouTube, Twitch
+* Mosaic
 * Many Outputs
 * Physical Inputs (IP Camera)
 * Streaming Protocols
