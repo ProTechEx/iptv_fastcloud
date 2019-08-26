@@ -33,11 +33,9 @@ class IServerHandler : public common::libev::IoLoopObserver {
   void Moved(common::libev::IoLoop* server, common::libev::IoClient* client) override;
   void Closed(common::libev::IoClient* client) override;
   void TimerEmited(common::libev::IoLoop* server, common::libev::timer_id_t id) override;
-#if LIBEV_CHILD_ENABLE
   void Accepted(common::libev::IoChild* child) override;
   void Moved(common::libev::IoLoop* server, common::libev::IoChild* child) override;
-  void ChildStatusChanged(common::libev::IoChild* child, int status) override;
-#endif
+  void ChildStatusChanged(common::libev::IoChild* child, int status, int signal) override;
 
   void DataReceived(common::libev::IoClient* client) override;
   void DataReadyToWrite(common::libev::IoClient* client) override;

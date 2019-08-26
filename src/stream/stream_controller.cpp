@@ -340,7 +340,6 @@ void StreamController::TimerEmited(common::libev::IoLoop* loop, common::libev::t
   }
 }
 
-#if LIBEV_CHILD_ENABLE
 void StreamController::Accepted(common::libev::IoChild* child) {
   UNUSED(child);
 }
@@ -350,11 +349,11 @@ void StreamController::Moved(common::libev::IoLoop* server, common::libev::IoChi
   UNUSED(child);
 }
 
-void StreamController::ChildStatusChanged(common::libev::IoChild* child, int status) {
+void StreamController::ChildStatusChanged(common::libev::IoChild* child, int status, int signal) {
   UNUSED(child);
   UNUSED(status);
+  UNUSED(signal);
 }
-#endif
 
 common::ErrnoError StreamController::HandleRequestCommand(common::libev::IoClient* client,
                                                           fastotv::protocol::request_t* req) {

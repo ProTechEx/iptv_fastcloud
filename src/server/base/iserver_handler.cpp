@@ -48,7 +48,6 @@ void IServerHandler::TimerEmited(common::libev::IoLoop* server, common::libev::t
   UNUSED(id);
 }
 
-#if LIBEV_CHILD_ENABLE
 void IServerHandler::Accepted(common::libev::IoChild* child) {
   UNUSED(child);
 }
@@ -59,11 +58,11 @@ void IServerHandler::Moved(common::libev::IoLoop* server, common::libev::IoChild
   online_clients_--;
 }
 
-void IServerHandler::ChildStatusChanged(common::libev::IoChild* child, int status) {
+void IServerHandler::ChildStatusChanged(common::libev::IoChild* child, int status, int signal) {
   UNUSED(child);
   UNUSED(status);
+  UNUSED(signal);
 }
-#endif
 
 void IServerHandler::DataReceived(common::libev::IoClient* client) {
   UNUSED(client);

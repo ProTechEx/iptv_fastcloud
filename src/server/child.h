@@ -24,12 +24,7 @@
 namespace fastocloud {
 namespace server {
 
-#if LIBEV_CHILD_ENABLE
 class Child : public common::libev::IoChild {
-#else
-class Child {
-#endif
-
  public:
   typedef fastotv::protocol::protocol_client_t client_t;
 

@@ -38,9 +38,7 @@ class StreamServer : public common::libev::IoLoop {
   void SendChangeSourcesBroadcast(const ChangedSouresInfo& change) WARN_UNUSED_RESULT;
   void SendStatisticBroadcast(const StatisticInfo& statistic) WARN_UNUSED_RESULT;
 
-#if LIBEV_CHILD_ENABLE
   common::libev::IoChild* CreateChild() override;
-#endif
   common::libev::IoClient* CreateClient(const common::net::socket_info& info) override;
   void Started(common::libev::LibEvLoop* loop) override;
   void Stopped(common::libev::LibEvLoop* loop) override;

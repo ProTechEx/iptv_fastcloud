@@ -55,12 +55,10 @@ void StreamServer::SendStatisticBroadcast(const StatisticInfo& statistic) {
   WriteRequest(req);
 }
 
-#if LIBEV_CHILD_ENABLE
 common::libev::IoChild* StreamServer::CreateChild() {
   NOTREACHED();
   return nullptr;
 }
-#endif
 
 common::libev::IoClient* StreamServer::CreateClient(const common::net::socket_info& info) {
   UNUSED(info);

@@ -54,7 +54,6 @@ void HttpHandler::TimerEmited(common::libev::IoLoop* server, common::libev::time
   base_class::TimerEmited(server, id);
 }
 
-#if LIBEV_CHILD_ENABLE
 void HttpHandler::Accepted(common::libev::IoChild* child) {
   base_class::Accepted(child);
 }
@@ -63,10 +62,9 @@ void HttpHandler::Moved(common::libev::IoLoop* server, common::libev::IoChild* c
   base_class::Moved(server, child);
 }
 
-void HttpHandler::ChildStatusChanged(common::libev::IoChild* child, int status) {
-  base_class::ChildStatusChanged(child, status);
+void HttpHandler::ChildStatusChanged(common::libev::IoChild* child, int status, int signal) {
+  base_class::ChildStatusChanged(child, status, signal);
 }
-#endif
 
 void HttpHandler::DataReceived(common::libev::IoClient* client) {
   char buff[BUF_SIZE] = {0};

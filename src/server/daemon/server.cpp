@@ -20,23 +20,11 @@ namespace fastocloud {
 namespace server {
 
 DaemonServer::DaemonServer(const common::net::HostAndPort& host, common::libev::IoLoopObserver* observer)
-    : base_class(host, true, observer)
-#if !LIBEV_CHILD_ENABLE
-      ,
-      childs_()
-#endif
-{
-}
+    : base_class(host, true, observer) {}
 
 common::libev::tcp::TcpClient* DaemonServer::CreateClient(const common::net::socket_info& info) {
   return new ProtocoledDaemonClient(this, info);
 }
-
-#if !LIBEV_CHILD_ENABLE
-std::vector<Child*> DaemonServer::GetChilds() const {
-  return childs_;
-}
-#endif
 
 }  // namespace server
 }  // namespace fastocloud

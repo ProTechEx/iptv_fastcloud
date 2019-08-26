@@ -19,23 +19,12 @@
 namespace fastocloud {
 namespace server {
 
-#if !LIBEV_CHILD_ENABLE
-class Child;
-#endif
-
 class DaemonServer : public common::libev::tcp::TcpServer {
  public:
   typedef common::libev::tcp::TcpServer base_class;
   explicit DaemonServer(const common::net::HostAndPort& host, common::libev::IoLoopObserver* observer = nullptr);
 
-#if !LIBEV_CHILD_ENABLE
-  std::vector<Child*> GetChilds() const;
-#endif
-
  private:
-#if !LIBEV_CHILD_ENABLE
-  std::vector<Child*> childs_;
-#endif
   common::libev::tcp::TcpClient* CreateClient(const common::net::socket_info& info) override;
 };
 

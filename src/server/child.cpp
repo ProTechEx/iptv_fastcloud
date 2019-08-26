@@ -19,11 +19,7 @@
 namespace fastocloud {
 namespace server {
 
-#if LIBEV_CHILD_ENABLE
 Child::Child(common::libev::IoLoop* server) : IoChild(server), client_(nullptr), id_(0) {}
-#else
-Child::Child(common::libev::IoLoop* server) : client_(nullptr), id_(0) {}
-#endif
 
 Child::~Child() {}
 

@@ -466,6 +466,7 @@ int ProcessSlaveWrapper::Exec(int argc, char** argv) {
   node_stats_->prev = service::GetMachineCpuShot();
   node_stats_->prev_nshot = service::GetMachineNetShot();
   node_stats_->timestamp = common::time::current_utc_mstime();
+
   res = server->Exec();
 
 finished:
@@ -546,7 +547,6 @@ void ProcessSlaveWrapper::TimerEmited(common::libev::IoLoop* server, common::lib
   }
 }
 
-#if LIBEV_CHILD_ENABLE
 void ProcessSlaveWrapper::Accepted(common::libev::IoChild* child) {
   UNUSED(child);
 }
@@ -556,30 +556,19 @@ void ProcessSlaveWrapper::Moved(common::libev::IoLoop* server, common::libev::Io
   UNUSED(child);
 }
 
-void ProcessSlaveWrapper::ChildStatusChanged(common::libev::IoChild* child, int status) {
+void ProcessSlaveWrapper::ChildStatusChanged(common::libev::IoChild* child, int status, int signal) {
   ChildStream* channel = static_cast<ChildStream*>(child);
   const auto sid = channel->GetStreamID();
 
   INFO_LOG() << "Successful finished children id: " << sid;
-  int stabled_status = EXIT_SUCCESS;
-  int signal_number = 0;
-
-  if (WIFEXITED(status)) {
-    stabled_status = WEXITSTATUS(status);
-  } else {
-    stabled_status = EXIT_FAILURE;
-  }
-  if (WIFSIGNALED(status)) {
-    signal_number = WTERMSIG(status);
-  }
-  INFO_LOG() << "Stream id: " << sid << ", exit with status: " << (stabled_status ? "FAILURE" : "SUCCESS")
-             << ", signal: " << signal_number;
+  INFO_LOG() << "Stream id: " << sid << ", exit with status: " << (status ? "FAILURE" : "SUCCESS")
+             << ", signal: " << signal;
 
   loop_->UnRegisterChild(child);
 
   delete channel;
 
-  stream::QuitStatusInfo ch_status_info(sid, !stabled_status, signal_number);  // reverse status
+  stream::QuitStatusInfo ch_status_info(sid, status, signal);  // reverse status
   fastotv::protocol::request_t req;
   common::Error err_ser = QuitStatusStreamBroadcast(ch_status_info, &req);
   if (err_ser) {
@@ -588,7 +577,6 @@ void ProcessSlaveWrapper::ChildStatusChanged(common::libev::IoChild* child, int 
 
   BroadcastClients(req);
 }
-#endif
 
 Child* ProcessSlaveWrapper::FindChildByID(stream_id_t cid) const {
   DaemonServer* server = static_cast<DaemonServer*>(loop_);
