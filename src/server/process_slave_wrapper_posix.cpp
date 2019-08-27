@@ -127,7 +127,7 @@ common::ErrnoError ProcessSlaveWrapper::CreateChildStreamImpl(const serialized_s
     }
 #endif
 
-    StartStreamInfo params;
+    StreamStartInfo params;
     params.feedback_dir = feedback_dir;
     params.log_level = logs_level;
     params.streamlink_path = config_.streamlink_path;
