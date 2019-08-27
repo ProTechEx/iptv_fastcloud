@@ -63,22 +63,21 @@ int stream_exec(const char* process_name, const void* args, void* command_client
     return EXIT_FAILURE;
   }
 
-  const fastocloud::StreamParameters* sargs = static_cast<const fastocloud::StreamParameters*>(args);
-  const char* feedback_dir_ptr = sargs->cmd_args.feedback_dir;
-  if (!feedback_dir_ptr) {
+  const fastocloud::StartStreamInfo* sargs = static_cast<const fastocloud::StartStreamInfo*>(args);
+  const std::string feedback_dir = sargs->feedback_dir;
+  if (feedback_dir.empty()) {
     CRITICAL_LOG() << "Define " FEEDBACK_DIR_FIELD " variable and make it valid";
     return EXIT_FAILURE;
   }
 
-  const char* streamlink_path_ptr = sargs->cmd_args.streamlink_path;
-  if (!streamlink_path_ptr) {
+  const std::string streamlink_path = sargs->streamlink_path;
+  if (streamlink_path.empty()) {
     CRITICAL_LOG() << "Define streamlink path variable and make it valid";
     return EXIT_FAILURE;
   }
 
-  common::logging::LOG_LEVEL logs_level = static_cast<common::logging::LOG_LEVEL>(sargs->cmd_args.log_level);
   fastotv::protocol::protocol_client_t* client = static_cast<fastotv::protocol::protocol_client_t*>(command_client);
-  return start_stream(process_name, common::file_system::ascii_directory_string_path(feedback_dir_ptr),
-                      common::file_system::ascii_file_string_path(streamlink_path_ptr), logs_level, sargs->config_args,
-                      client, sargs->sha);
+  return start_stream(process_name, common::file_system::ascii_directory_string_path(feedback_dir),
+                      common::file_system::ascii_file_string_path(streamlink_path), sargs->log_level,
+                      sargs->config_args, client, sargs->sha);
 }

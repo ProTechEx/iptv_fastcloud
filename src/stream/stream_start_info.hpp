@@ -21,8 +21,10 @@
 
 namespace fastocloud {
 
-struct StreamParameters {
-  struct cmd_args cmd_args;
+struct StartStreamInfo {
+  std::string feedback_dir;
+  common::logging::LOG_LEVEL log_level;
+  std::string streamlink_path;
   StreamConfig config_args;
   StreamInfo sha;
 };

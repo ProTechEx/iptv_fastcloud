@@ -31,6 +31,7 @@
 #include "server/child_stream.h"
 #include "server/daemon/server.h"
 
+#include "stream/stream_start_info.hpp"
 #include "stream/stream_wrapper.h"
 
 #include "pipe/pipe_client.h"
@@ -80,8 +81,7 @@ common::ErrnoError ProcessSlaveWrapper::CreateChildStreamImpl(const serialized_s
   pid_t pid = 0;
 #endif
   if (pid == 0) {  // child
-    typedef int (*stream_exec_t)(const char* process_name, const void* cmd_args, const void* config_args,
-                                 const void* mem, void* command_client);
+    typedef int (*stream_exec_t)(const char* process_name, const void* args, void* command_client);
 
     const std::string absolute_source_dir = common::file_system::absolute_path_from_relative(RELATIVE_SOURCE_DIR);
     const std::string lib_full_path = common::file_system::make_path(absolute_source_dir, CORE_LIBRARY);
@@ -127,11 +127,16 @@ common::ErrnoError ProcessSlaveWrapper::CreateChildStreamImpl(const serialized_s
     }
 #endif
 
-    const struct cmd_args client_args = {feedback_dir.c_str(), logs_level, config_.streamlink_path.c_str()};
+    StartStreamInfo params;
+    params.feedback_dir = feedback_dir;
+    params.log_level = logs_level;
+    params.streamlink_path = config_.streamlink_path;
+    params.config_args = config_args;
+    params.sha = sha;
     pipe::ProtocoledPipeClient* client =
         new pipe::ProtocoledPipeClient(nullptr, read_command_client, write_responce_client);
     client->SetName(sha.id);
-    int res = stream_exec_func(new_name, &client_args, &config_args, &sha, client);
+    int res = stream_exec_func(new_name, &params, client);
     client->Close();
     delete client;
     dlclose(handle);

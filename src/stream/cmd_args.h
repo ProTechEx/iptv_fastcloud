@@ -15,9 +15,3 @@
 #pragma once
 
 #define LOGS_FILE_NAME "logs"
-
-struct cmd_args {
-  const char* feedback_dir;
-  int log_level;
-  const char* streamlink_path;
-};
