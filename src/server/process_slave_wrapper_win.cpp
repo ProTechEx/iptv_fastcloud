@@ -51,13 +51,20 @@ common::ErrnoError ProcessSlaveWrapper::CreateChildStreamImpl(const serialized_s
   param->config_args = copy;
   param->sha = sha;
 
+#define CMD_LINE_SIZE 512
+  char cmd_line[CMD_LINE_SIZE] = {0};
+#if defined(_WIN64)
+  common::SNPrintf(cmd_line, CMD_LINE_SIZE, STREAMER_EXE_NAME ".exe %llu", reinterpret_cast<LONG_PTR>(args_handle));
+#else
+  common::SNPrintf(cmd_line, CMD_LINE_SIZE, STREAMER_EXE_NAME ".exe %lu", reinterpret_cast<DWORD>(args_handle));
+#endif
+
   STARTUPINFO si;
   PROCESS_INFORMATION pi;
   memset(&pi, 0, sizeof(pi));
   memset(&si, 0, sizeof(si));
   si.cb = sizeof(si);
-  if (!CreateProcess(nullptr, "C:\\msys64\\mingw64\\bin\\license_gen.exe", nullptr, nullptr, TRUE, CREATE_SUSPENDED,
-                     nullptr, nullptr, &si, &pi)) {
+  if (!CreateProcess(nullptr, cmd_line, nullptr, nullptr, TRUE, CREATE_SUSPENDED, nullptr, nullptr, &si, &pi)) {
     CloseHandle(args_handle);
     return common::make_errno_error(errno);
   }
@@ -81,8 +88,7 @@ common::ErrnoError ProcessSlaveWrapper::CreateChildStreamImpl(const serialized_s
   ChildStream* child = new ChildStream(loop_, sha.id);
   loop_->RegisterChild(child, pi.hProcess);
   CloseHandle(pi.hThread);
-
-  return common::make_errno_error(EINTR);
+  return common::ErrnoError();
 }
 
 }  // namespace server
