@@ -244,12 +244,11 @@ int ProcessSlaveWrapper::SendStopDaemonRequest(const std::string& license) {
 
   std::unique_ptr<ProtocoledDaemonClient> connection(new ProtocoledDaemonClient(nullptr, client_info));
   err = connection->StopMe(license);
+  ignore_result(connection->Close());
   if (err) {
-    connection->Close();
     return EXIT_FAILURE;
   }
 
-  connection->Close();
   return EXIT_SUCCESS;
 }
 
@@ -466,15 +465,14 @@ void ProcessSlaveWrapper::ChildStatusChanged(common::libev::IoChild* child, int 
   ChildStream* channel = static_cast<ChildStream*>(child);
   const auto sid = channel->GetStreamID();
 
-  INFO_LOG() << "Successful finished children id: " << sid;
-  INFO_LOG() << "Stream id: " << sid << ", exit with status: " << (status ? "FAILURE" : "SUCCESS")
-             << ", signal: " << signal;
+  INFO_LOG() << "Successful finished children id: " << sid << "\nStream id: " << sid
+             << ", exit with status: " << (status ? "FAILURE" : "SUCCESS") << ", signal: " << signal;
 
   loop_->UnRegisterChild(child);
 
   delete channel;
 
-  stream::QuitStatusInfo ch_status_info(sid, status, signal);  // reverse status
+  stream::QuitStatusInfo ch_status_info(sid, status, signal);
   fastotv::protocol::request_t req;
   common::Error err_ser = QuitStatusStreamBroadcast(ch_status_info, &req);
   if (err_ser) {
@@ -592,7 +590,7 @@ void ProcessSlaveWrapper::DataReceived(common::libev::IoClient* client) {
     common::ErrnoError err = DaemonDataReceived(dclient);
     if (err) {
       DEBUG_MSG_ERROR(err, common::logging::LOG_LEVEL_ERR);
-      dclient->Close();
+      ignore_result(dclient->Close());
       delete dclient;
     }
   } else if (stream_client_t* pipe_client = dynamic_cast<stream_client_t*>(client)) {
@@ -609,7 +607,7 @@ void ProcessSlaveWrapper::DataReceived(common::libev::IoClient* client) {
         }
       }
 
-      pipe_client->Close();
+      ignore_result(pipe_client->Close());
       delete pipe_client;
     }
   } else {
@@ -709,7 +707,7 @@ common::ErrnoError ProcessSlaveWrapper::HandleRequestClientStopService(Protocole
     auto childs = server->GetChilds();
     for (auto* child : childs) {
       ChildStream* channel = static_cast<ChildStream*>(child);
-      channel->Stop();
+      ignore_result(channel->Stop());
     }
 
     quit_cleanup_timer_ = loop_->CreateTimer(cleanup_seconds, false);
@@ -857,7 +855,7 @@ common::ErrnoError ProcessSlaveWrapper::HandleRequestClientStartStream(Protocole
 
     common::ErrnoError err = CreateChildStream(start_info.GetConfig());
     if (err) {
-      dclient->StartStreamFail(req->id, common::make_error_from_errno(err));
+      ignore_result(dclient->StartStreamFail(req->id, common::make_error_from_errno(err)));
       return err;
     }
 
@@ -894,7 +892,7 @@ common::ErrnoError ProcessSlaveWrapper::HandleRequestClientStopStream(Protocoled
       return dclient->StopFail(req->id, common::make_error("Stream not found"));
     }
 
-    chan->Stop();
+    ignore_result(chan->Stop());
     return dclient->StopStreamSuccess(req->id);
   }
 
@@ -928,7 +926,7 @@ common::ErrnoError ProcessSlaveWrapper::HandleRequestClientRestartStream(Protoco
       return dclient->ReStartStreamFail(req->id, common::make_error("Stream not found"));
     }
 
-    chan->Restart();
+    ignore_result(chan->Restart());
     return dclient->ReStartStreamSuccess(req->id);
   }
 

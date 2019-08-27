@@ -12,41 +12,41 @@
     along with fastocloud.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "server/pipe/pipe_client.h"
+#include "server/pipe/client.h"
 
 namespace fastocloud {
 namespace server {
 namespace pipe {
 
-ProtocoledPipeClient::ProtocoledPipeClient(common::libev::IoLoop* server, descriptor_t read_fd, descriptor_t write_fd)
+Client::Client(common::libev::IoLoop* server, descriptor_t read_fd, descriptor_t write_fd)
     : base_class(server),
       pipe_read_client_(new common::libev::PipeReadClient(nullptr, read_fd)),
       pipe_write_client_(new common::libev::PipeWriteClient(nullptr, write_fd)),
       read_fd_(read_fd) {}
 
-common::ErrnoError ProtocoledPipeClient::SingleWrite(const void* data, size_t size, size_t* nwrite_out) {
+common::ErrnoError Client::SingleWrite(const void* data, size_t size, size_t* nwrite_out) {
   return pipe_write_client_->SingleWrite(data, size, nwrite_out);
 }
 
-common::ErrnoError ProtocoledPipeClient::SingleRead(void* out, size_t max_size, size_t* nread) {
+common::ErrnoError Client::SingleRead(void* out, size_t max_size, size_t* nread) {
   return pipe_read_client_->SingleRead(out, max_size, nread);
 }
 
-descriptor_t ProtocoledPipeClient::GetFd() const {
+descriptor_t Client::GetFd() const {
   return read_fd_;
 }
 
-common::ErrnoError ProtocoledPipeClient::DoClose() {
+common::ErrnoError Client::DoClose() {
   ignore_result(pipe_write_client_->Close());
   ignore_result(pipe_read_client_->Close());
   return common::ErrnoError();
 }
 
-const char* ProtocoledPipeClient::ClassName() const {
-  return "ProtocoledPipeClient";
+const char* Client::ClassName() const {
+  return "PipeClient";
 }
 
-ProtocoledPipeClient::~ProtocoledPipeClient() {
+Client::~Client() {
   destroy(&pipe_write_client_);
   destroy(&pipe_read_client_);
 }

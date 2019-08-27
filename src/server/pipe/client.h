@@ -22,14 +22,14 @@ namespace fastocloud {
 namespace server {
 namespace pipe {
 
-class ProtocoledPipeClient : public fastotv::protocol::protocol_client_t {
+class Client : public fastotv::protocol::protocol_client_t {
  public:
   typedef fastotv::protocol::ProtocolClient<common::libev::IoClient> base_class;
-  ~ProtocoledPipeClient() override;
+  ~Client() override;
 
   const char* ClassName() const override;
 
-  ProtocoledPipeClient(common::libev::IoLoop* server, descriptor_t read_fd, descriptor_t write_fd);
+  Client(common::libev::IoLoop* server, descriptor_t read_fd, descriptor_t write_fd);
 
  protected:
   common::ErrnoError SingleWrite(const void* data, size_t size, size_t* nwrite_out) override;
@@ -44,7 +44,7 @@ class ProtocoledPipeClient : public fastotv::protocol::protocol_client_t {
   common::libev::PipeWriteClient* pipe_write_client_;
   const descriptor_t read_fd_;
 
-  DISALLOW_COPY_AND_ASSIGN(ProtocoledPipeClient);
+  DISALLOW_COPY_AND_ASSIGN(Client);
 };
 
 }  // namespace pipe
