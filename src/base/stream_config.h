@@ -14,10 +14,21 @@
 
 #pragma once
 
+#include <string>
+
+#include <common/error.h>
 #include <common/value.h>
+
+#include "base/stream_info.h"
 
 namespace fastocloud {
 
 typedef std::shared_ptr<common::HashValue> StreamConfig;
+
+common::ErrnoError MakeStreamInfo(const StreamConfig& config_args,
+                                  bool check_folders,
+                                  StreamInfo* sha,
+                                  std::string* feedback_dir,
+                                  common::logging::LOG_LEVEL* logs_level);
 
 }  // namespace fastocloud

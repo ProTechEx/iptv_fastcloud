@@ -24,3 +24,5 @@
 #define DEFAULT_AVFORMAT false
 
 #define TEST_URL "test"
+
+#define LOGS_FILE_NAME "logs"

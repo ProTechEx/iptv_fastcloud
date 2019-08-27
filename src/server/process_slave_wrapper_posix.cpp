@@ -31,7 +31,6 @@
 #include "server/child_stream.h"
 #include "server/daemon/server.h"
 
-#include "stream/stream_start_info.hpp"
 #include "stream/stream_wrapper.h"
 
 #include "pipe/pipe_client.h"
@@ -57,10 +56,7 @@ common::ErrnoError CreatePipe(int* read_client_fd, int* write_client_fd) {
 namespace fastocloud {
 namespace server {
 
-common::ErrnoError ProcessSlaveWrapper::CreateChildStreamImpl(const serialized_stream_t& config_args,
-                                                              const StreamInfo& sha,
-                                                              const std::string& feedback_dir,
-                                                              common::logging::LOG_LEVEL logs_level) {
+common::ErrnoError ProcessSlaveWrapper::CreateChildStreamImpl(const serialized_stream_t& config_args, stream_id_t sid) {
   int read_command_client = 0;
   int write_requests_client = 0;
   common::ErrnoError err = CreatePipe(&read_command_client, &write_requests_client);
@@ -99,7 +95,7 @@ common::ErrnoError ProcessSlaveWrapper::CreateChildStreamImpl(const serialized_s
       _exit(EXIT_FAILURE);
     }
 
-    const std::string new_process_name = common::MemSPrintf(STREAMER_NAME "_%s", sha.id);
+    const std::string new_process_name = common::MemSPrintf(STREAMER_NAME "_%s", sid);
     const char* new_name = new_process_name.c_str();
 #if defined(OS_LINUX)
     for (int i = 0; i < process_argc_; ++i) {
@@ -127,16 +123,10 @@ common::ErrnoError ProcessSlaveWrapper::CreateChildStreamImpl(const serialized_s
     }
 #endif
 
-    StreamStartInfo params;
-    params.feedback_dir = feedback_dir;
-    params.log_level = logs_level;
-    params.streamlink_path = config_.streamlink_path;
-    params.config_args = config_args;
-    params.sha = sha;
     pipe::ProtocoledPipeClient* client =
         new pipe::ProtocoledPipeClient(nullptr, read_command_client, write_responce_client);
-    client->SetName(sha.id);
-    int res = stream_exec_func(new_name, &params, client);
+    client->SetName(sid);
+    int res = stream_exec_func(new_name, config_args.get(), client);
     client->Close();
     delete client;
     dlclose(handle);
@@ -156,9 +146,9 @@ common::ErrnoError ProcessSlaveWrapper::CreateChildStreamImpl(const serialized_s
 
     pipe::ProtocoledPipeClient* pipe_client =
         new pipe::ProtocoledPipeClient(loop_, read_responce_client, write_requests_client);
-    pipe_client->SetName(sha.id);
+    pipe_client->SetName(sid);
     loop_->RegisterClient(pipe_client);
-    ChildStream* new_channel = new ChildStream(loop_, sha.id);
+    ChildStream* new_channel = new ChildStream(loop_, sid);
     new_channel->SetClient(pipe_client);
     loop_->RegisterChild(new_channel, pid);
   }

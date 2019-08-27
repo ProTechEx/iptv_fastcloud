@@ -20,7 +20,7 @@
 #include <common/file_system/file_system_utils.h>
 #include <common/file_system/string_path_utils.h>
 
-#include "utils/utils.h"
+#include "base/utils.h"
 
 #define OK_RESULT "OK"
 
@@ -216,7 +216,7 @@ DirectoryState::DirectoryState(const std::string& dir_str, const char* k)
 
   dir = common::file_system::ascii_directory_string_path(dir_str);
   const std::string dir_path = dir.GetPath();
-  common::ErrnoError errn = utils::CreateAndCheckDir(dir_path);
+  common::ErrnoError errn = CreateAndCheckDir(dir_path);
   if (errn) {
     error_str = errn->GetDescription();
     return;

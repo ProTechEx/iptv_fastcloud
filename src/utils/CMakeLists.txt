@@ -25,14 +25,12 @@ SET(HEADERS
   ${CMAKE_SOURCE_DIR}/src/utils/chunk_info.h
   ${CMAKE_SOURCE_DIR}/src/utils/m3u8_reader.h
   ${CMAKE_SOURCE_DIR}/src/utils/m3u8_writer.h
-  ${CMAKE_SOURCE_DIR}/src/utils/utils.h
 )
 
 SET(SOURCES
   ${CMAKE_SOURCE_DIR}/src/utils/chunk_info.cpp
   ${CMAKE_SOURCE_DIR}/src/utils/m3u8_reader.cpp
   ${CMAKE_SOURCE_DIR}/src/utils/m3u8_writer.cpp
-  ${CMAKE_SOURCE_DIR}/src/utils/utils.cpp
 )
 
 SET(UTILS_SOURCES ${HEADERS} ${SOURCES})

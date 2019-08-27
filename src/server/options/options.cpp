@@ -433,6 +433,7 @@ bool FindOption(const std::string& key, option_t* opt) {
     {TYPE_FIELD, validate_type},
     {FEEDBACK_DIR_FIELD, validate_feedback_dir},
     {LOG_LEVEL_FIELD, validate_log_level},
+    {STREAM_LINK_PATH, dont_validate},
     {INPUT_FIELD, validate_input},
     {OUTPUT_FIELD, validate_output},
     {RESTART_ATTEMPTS_FIELD, validate_restart_attempts},

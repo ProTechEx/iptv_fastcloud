@@ -26,7 +26,9 @@
 #include <common/net/net.h>
 
 #include "base/config_fields.h"
+#include "base/constants.h"
 #include "base/inputs_outputs.h"
+#include "base/utils.h"
 
 #include "gpu_stats/perf_monitor.h"
 
@@ -55,11 +57,9 @@
 #include "server/vods/handler.h"
 #include "server/vods/server.h"
 
-#include "stream/cmd_args.h"
 #include "stream_commands/commands.h"
 
 #include "utils/m3u8_reader.h"
-#include "utils/utils.h"
 
 #if defined(OS_WIN)
 #undef SetPort
@@ -146,100 +146,6 @@ common::Error PostHttpFile(const common::file_system::ascii_file_string_path& fi
 }  // namespace
 
 namespace fastocloud {
-namespace {
-
-common::ErrnoError MakeStreamInfo(const StreamConfig& config_args,
-                                  bool check_folders,
-                                  StreamInfo* sha,
-                                  std::string* feedback_dir,
-                                  common::logging::LOG_LEVEL* logs_level) {
-  if (!sha || !feedback_dir || !logs_level) {
-    return common::make_errno_error_inval();
-  }
-
-  StreamInfo lsha;
-  common::Value* id_field = config_args->Find(ID_FIELD);
-  if (!id_field || !id_field->GetAsBasicString(&lsha.id)) {
-    return common::make_errno_error("Define " ID_FIELD " variable and make it valid", EAGAIN);
-  }
-
-  int type;
-  common::Value* type_field = config_args->Find(TYPE_FIELD);
-  if (!type_field || !type_field->GetAsInteger(&type)) {
-    return common::make_errno_error("Define " TYPE_FIELD " variable and make it valid", EAGAIN);
-  }
-  lsha.type = static_cast<StreamType>(type);
-
-  if (lsha.type == PROXY) {
-    return common::make_errno_error("Proxy streams not handled for now", EINVAL);
-  }
-
-  std::string lfeedback_dir;
-  common::Value* feedback_field = config_args->Find(FEEDBACK_DIR_FIELD);
-  if (!feedback_field || !feedback_field->GetAsBasicString(&lfeedback_dir)) {
-    return common::make_errno_error("Define " FEEDBACK_DIR_FIELD " variable and make it valid", EAGAIN);
-  }
-
-  int llogs_level;
-  common::Value* log_level_field = config_args->Find(LOG_LEVEL_FIELD);
-  if (!log_level_field || !log_level_field->GetAsInteger(&llogs_level)) {
-    llogs_level = common::logging::LOG_LEVEL_DEBUG;
-  }
-
-  common::ErrnoError errn = utils::CreateAndCheckDir(lfeedback_dir);
-  if (errn) {
-    return errn;
-  }
-
-  input_t input;
-  if (!read_input(config_args, &input)) {
-    return common::make_errno_error("Define " INPUT_FIELD " variable and make it valid", EAGAIN);
-  }
-
-  for (auto input_uri : input) {
-    lsha.input.push_back(input_uri.GetID());
-  }
-
-  if (check_folders) {
-    bool is_timeshift_rec_or_catchup = type == TIMESHIFT_RECORDER || type == CATCHUP;  // no outputs
-    if (is_timeshift_rec_or_catchup) {
-      std::string timeshift_dir;
-      common::Value* timeshift_dir_field = config_args->Find(TIMESHIFT_DIR_FIELD);
-      if (!timeshift_dir_field || !timeshift_dir_field->GetAsBasicString(&timeshift_dir)) {
-        return common::make_errno_error("Define " TIMESHIFT_DIR_FIELD " variable and make it valid", EAGAIN);
-      }
-
-      errn = utils::CreateAndCheckDir(timeshift_dir);
-      if (errn) {
-        return errn;
-      }
-    } else {
-      output_t output;
-      if (!read_output(config_args, &output)) {
-        return common::make_errno_error("Define " OUTPUT_FIELD " variable and make it valid", EAGAIN);
-      }
-
-      for (auto out_uri : output) {
-        common::uri::Url ouri = out_uri.GetOutput();
-        if (ouri.GetScheme() == common::uri::Url::http) {
-          const common::file_system::ascii_directory_string_path http_root = out_uri.GetHttpRoot();
-          const std::string http_root_str = http_root.GetPath();
-          common::ErrnoError errn = utils::CreateAndCheckDir(http_root_str);
-          if (errn) {
-            return errn;
-          }
-        }
-        lsha.output.push_back(out_uri.GetID());
-      }
-    }
-  }
-
-  *logs_level = static_cast<common::logging::LOG_LEVEL>(llogs_level);
-  *feedback_dir = lfeedback_dir;
-  *sha = lsha;
-  return common::ErrnoError();
-}
-}  // namespace
 namespace server {
 namespace {
 typedef VodsHandler CodsHandler;
@@ -534,7 +440,7 @@ void ProcessSlaveWrapper::TimerEmited(common::libev::IoLoop* server, common::lib
     BroadcastClients(req);
   } else if (cleanup_files_timer_ == id) {
     for (auto it = vods_links_.begin(); it != vods_links_.end(); ++it) {
-      utils::RemoveFilesByExtension((*it).first, CHUNK_EXT);
+      RemoveFilesByExtension((*it).first, CHUNK_EXT);
     }
   } else if (quit_cleanup_timer_ == id) {
 #if defined(SUBSCRIBERS)
@@ -857,7 +763,8 @@ common::ErrnoError ProcessSlaveWrapper::CreateChildStream(const serialized_strea
     return common::make_errno_error(common::MemSPrintf("Stream with id: %s exist, skip request.", sha.id), EINVAL);
   }
 
-  return CreateChildStreamImpl(config_args, sha, feedback_dir, logs_level);
+  config_args->Insert(STREAM_LINK_PATH, common::Value::CreateStringValueFromBasicString(config_.streamlink_path));
+  return CreateChildStreamImpl(config_args, sha.id);
 }
 
 common::ErrnoError ProcessSlaveWrapper::HandleRequestChangedSourcesStream(stream_client_t* pclient,

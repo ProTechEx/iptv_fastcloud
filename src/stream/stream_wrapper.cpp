@@ -19,9 +19,9 @@
 #include <common/file_system/string_path_utils.h>
 
 #include "base/config_fields.h"
+#include "base/constants.h"
 
 #include "stream/stream_controller.h"
-#include "stream/stream_start_info.hpp"
 
 namespace {
 
@@ -63,21 +63,30 @@ int stream_exec(const char* process_name, const void* args, void* command_client
     return EXIT_FAILURE;
   }
 
-  const fastocloud::StreamStartInfo* sargs = static_cast<const fastocloud::StreamStartInfo*>(args);
-  const std::string feedback_dir = sargs->feedback_dir;
+  const common::HashValue* vargs = static_cast<const common::HashValue*>(args);
+  fastocloud::StreamConfig sargs(vargs->DeepCopy());
+  fastocloud::StreamInfo sha;
+  std::string feedback_dir;
+  common::logging::LOG_LEVEL logs_level;
+  common::ErrnoError err = fastocloud::MakeStreamInfo(sargs, true, &sha, &feedback_dir, &logs_level);
+  if (err) {
+    CRITICAL_LOG() << "Invalid config error: " << err->GetDescription();
+    return EXIT_FAILURE;
+  }
+
   if (feedback_dir.empty()) {
     CRITICAL_LOG() << "Define " FEEDBACK_DIR_FIELD " variable and make it valid";
     return EXIT_FAILURE;
   }
 
-  const std::string streamlink_path = sargs->streamlink_path;
-  if (streamlink_path.empty()) {
+  std::string streamlink_path;
+  common::Value* streamlink_path_field = sargs->Find(STREAM_LINK_PATH);
+  if (!streamlink_path_field || !streamlink_path_field->GetAsBasicString(&streamlink_path)) {
     CRITICAL_LOG() << "Define streamlink path variable and make it valid";
     return EXIT_FAILURE;
   }
 
   fastotv::protocol::protocol_client_t* client = static_cast<fastotv::protocol::protocol_client_t*>(command_client);
   return start_stream(process_name, common::file_system::ascii_directory_string_path(feedback_dir),
-                      common::file_system::ascii_file_string_path(streamlink_path), sargs->log_level,
-                      sargs->config_args, client, sargs->sha);
+                      common::file_system::ascii_file_string_path(streamlink_path), logs_level, sargs, client, sha);
 }

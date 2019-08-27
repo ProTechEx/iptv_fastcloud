@@ -11,6 +11,7 @@ SET(SOURCE_ROOT ${CMAKE_SOURCE_DIR}/src)
 # for sources only absolute paths
 SET(BASE_HEADERS
   ${CMAKE_SOURCE_DIR}/src/base/types.h
+  ${CMAKE_SOURCE_DIR}/src/base/utils.h
   ${CMAKE_SOURCE_DIR}/src/base/stream_config.h
   ${CMAKE_SOURCE_DIR}/src/base/stream_config_parse.h
   ${CMAKE_SOURCE_DIR}/src/base/input_uri.h
@@ -28,6 +29,7 @@ SET(BASE_HEADERS
 
 SET(BASE_SOURCES
   ${CMAKE_SOURCE_DIR}/src/base/types.cpp
+  ${CMAKE_SOURCE_DIR}/src/base/utils.cpp
   ${CMAKE_SOURCE_DIR}/src/base/stream_config.cpp
   ${CMAKE_SOURCE_DIR}/src/base/stream_config_parse.cpp
   ${CMAKE_SOURCE_DIR}/src/base/input_uri.cpp

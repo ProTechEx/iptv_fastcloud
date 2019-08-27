@@ -82,6 +82,61 @@ common::Value* MakeValueFromJson(json_object* obj) {
   return nullptr;
 }
 
+json_object* MakeJson(const common::Value* value) {
+  const common::Value::Type type = value->GetType();
+  if (type == common::Value::TYPE_NULL) {
+    return nullptr;
+  } else if (type == common::Value::TYPE_BOOLEAN) {
+    bool rbool;
+    if (value->GetAsBoolean(&rbool)) {
+      return json_object_new_boolean(rbool);
+    }
+  } else if (type == common::Value::TYPE_DOUBLE) {
+    double rdouble;
+    if (value->GetAsDouble(&rdouble)) {
+      return json_object_new_double(rdouble);
+    }
+  } else if (type == common::Value::TYPE_INTEGER) {
+    int rint;
+    if (value->GetAsInteger(&rint)) {
+      return json_object_new_int(rint);
+    }
+  } else if (type == common::Value::TYPE_STRING) {
+    common::Value::string_t rstring;
+    if (value->GetAsString(&rstring)) {
+      const std::string r = rstring.as_string();
+      return json_object_new_string(r.c_str());
+    }
+  } else if (type == common::Value::TYPE_HASH) {
+    json_object* result = json_object_new_object();
+    const common::HashValue* hash = nullptr;
+    if (value->GetAsHash(&hash)) {
+      for (auto it = hash->begin(); it != hash->end(); ++it) {
+        const common::Value::string_t key = it->first;
+        const common::Value* value = it->second;
+        json_object_object_add(result, key.data(), MakeJson(value));
+      }
+    }
+    return result;
+  } else if (type == common::Value::TYPE_ARRAY) {
+    json_object* arr = json_object_new_array();
+    const common::ArrayValue* arr_value = nullptr;
+    if (value->GetAsList(&arr_value)) {
+      for (size_t i = 0; i < arr_value->GetSize(); ++i) {
+        const common::Value* val = nullptr;
+        if (arr_value->Get(i, &val)) {
+          json_object* obj = MakeJson(val);
+          json_object_array_add(arr, obj);
+        }
+      }
+    }
+    return arr;
+  }
+
+  DNOTREACHED();
+  return nullptr;
+}
+
 }  // namespace
 
 namespace fastocloud {
@@ -108,6 +163,15 @@ std::unique_ptr<common::HashValue> MakeConfigFromJson(json_object* obj) {
   }
 
   return nullptr;
+}
+
+bool MakeJsonFromConfig(std::shared_ptr<common::HashValue> config, json_object** json) {
+  if (!config || !json) {
+    return false;
+  }
+
+  *json = MakeJson(config.get());
+  return true;
 }
 
 }  // namespace fastocloud

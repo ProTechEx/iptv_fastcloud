@@ -91,10 +91,7 @@ class ProcessSlaveWrapper : public common::libev::IoLoopObserver, public server:
   common::ErrnoError StreamDataReceived(stream_client_t* pclient) WARN_UNUSED_RESULT;
 
   common::ErrnoError CreateChildStream(const serialized_stream_t& config_args);
-  common::ErrnoError CreateChildStreamImpl(const serialized_stream_t& config_args,
-                                           const StreamInfo& sha,
-                                           const std::string& feedback_dir,
-                                           common::logging::LOG_LEVEL logs_level);
+  common::ErrnoError CreateChildStreamImpl(const serialized_stream_t& config_args, stream_id_t sid);
 
   // stream
   common::ErrnoError HandleRequestChangedSourcesStream(stream_client_t* pclient,

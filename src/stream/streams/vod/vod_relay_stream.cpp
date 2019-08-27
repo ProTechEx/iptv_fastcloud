@@ -14,7 +14,7 @@
 
 #include "stream/streams/vod/vod_relay_stream.h"
 
-#include "utils/utils.h"
+#include "base/utils.h"
 
 namespace fastocloud {
 namespace stream {
@@ -38,7 +38,7 @@ void VodRelayStream::PostExecCleanup() {
 
       if (scheme == common::uri::Url::http) {
         const common::file_system::ascii_directory_string_path http_path = output.GetHttpRoot();
-        utils::RemoveFilesByExtension(http_path, CHUNK_EXT);
+        RemoveFilesByExtension(http_path, CHUNK_EXT);
       }
     }
   }

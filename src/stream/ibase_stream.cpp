@@ -30,6 +30,7 @@
 #include <common/time.h>
 
 #include "base/channel_stats.h"
+#include "base/utils.h"
 
 #include "stream/dumpers/dumpers_factory.h"
 #include "stream/elements/element.h"
@@ -37,8 +38,6 @@
 #include "stream/gstreamer_utils.h"
 #include "stream/ibase_builder.h"
 #include "stream/probes.h"  // for Probe (ptr only), PROBE_IN, PROBE_OUT
-
-#include "utils/utils.h"
 
 #define MIN_OUT_DATA(SEC) 4 * 1024 * SEC  // 4 kBps
 #define MIN_IN_DATA(SEC) 4 * 1024 * SEC   // 4 kBps
@@ -222,7 +221,7 @@ void IBaseStream::PreExecCleanup(time_t old_life_time) {
 
     if (scheme == common::uri::Url::http) {
       const common::file_system::ascii_directory_string_path http_path = output.GetHttpRoot();
-      utils::RemoveOldFilesByTime(http_path, max_life_time / 1000, CHUNK_EXT);
+      RemoveOldFilesByTime(http_path, max_life_time / 1000, CHUNK_EXT);
     }
   }
 }

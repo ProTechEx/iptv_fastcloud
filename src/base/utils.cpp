@@ -12,7 +12,7 @@
     along with fastocloud.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "utils/utils.h"
+#include "base/utils.h"
 
 #include <dirent.h>
 #include <string.h>
@@ -22,7 +22,6 @@
 #include <common/sprintf.h>
 
 namespace fastocloud {
-namespace utils {
 
 common::ErrnoError CreateAndCheckDir(const std::string& directory_path) {
   if (!common::file_system::is_directory_exist(directory_path)) {
@@ -117,5 +116,4 @@ void RemoveOldFilesByTime(const common::file_system::ascii_directory_string_path
   DEBUG_LOG() << "Finished clean up folder: " << path;
 }
 
-}  // namespace utils
 }  // namespace fastocloud
