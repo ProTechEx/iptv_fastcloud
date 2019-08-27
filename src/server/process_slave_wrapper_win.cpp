@@ -18,16 +18,10 @@
 
 #include "server/child_stream.h"
 
-#include "stream/stream_wrapper.h"
+#include "stream/stream_start_info.hpp"
 
 namespace fastocloud {
 namespace server {
-
-struct StreamParameters {
-  struct cmd_args client_args;
-  ProcessSlaveWrapper::serialized_stream_t config_args;
-  StreamInfo sha;
-};
 
 common::ErrnoError ProcessSlaveWrapper::CreateChildStreamImpl(const serialized_stream_t& config_args,
                                                               const StreamInfo& sha,
@@ -50,8 +44,9 @@ common::ErrnoError ProcessSlaveWrapper::CreateChildStreamImpl(const serialized_s
     return common::make_errno_error(errno);
   }
 
-  param->client_args = {feedback_dir.c_str(), logs_level, config_.streamlink_path.c_str()};
-  param->config_args = config_args;
+  const serialized_stream_t copy(config_args->DeepCopy());
+  param->cmd_args = {feedback_dir.c_str(), logs_level, config_.streamlink_path.c_str()};
+  param->config_args = copy;
   param->sha = sha;
 
   STARTUPINFO si;

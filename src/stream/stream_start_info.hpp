@@ -14,4 +14,17 @@
 
 #pragma once
 
-extern "C" int stream_exec(const char* process_name, const void* args, void* command_client);
+#include "stream/cmd_args.h"
+
+#include "base/stream_config.h"
+#include "base/stream_info.h"
+
+namespace fastocloud {
+
+struct StreamParameters {
+  struct cmd_args cmd_args;
+  StreamConfig config_args;
+  StreamInfo sha;
+};
+
+}  // namespace fastocloud

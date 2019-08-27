@@ -16,6 +16,7 @@ SET(GLOBAL_HEADERS
   ${CMAKE_SOURCE_DIR}/src/stream/stream_server.h
 
   ${CMAKE_SOURCE_DIR}/src/stream/cmd_args.h
+  ${CMAKE_SOURCE_DIR}/src/stream/stream_start_info.hpp
   ${CMAKE_SOURCE_DIR}/src/stream/stream_wrapper.h
   ${CMAKE_SOURCE_DIR}/src/stream/gstreamer_utils.h
   ${CMAKE_SOURCE_DIR}/src/stream/streams_factory.h

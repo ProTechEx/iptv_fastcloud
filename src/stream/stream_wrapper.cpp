@@ -21,6 +21,7 @@
 #include "base/config_fields.h"
 
 #include "stream/stream_controller.h"
+#include "stream/stream_start_info.hpp"
 
 namespace {
 
@@ -56,33 +57,28 @@ int start_stream(const std::string& process_name,
 
 }  // namespace
 
-int stream_exec(const char* process_name,
-                const cmd_args* args,
-                const void* config_args,
-                const void* sha,
-                void* command_client) {
-  if (!process_name || !args || !config_args || !command_client || !sha) {
+int stream_exec(const char* process_name, const void* args, void* command_client) {
+  if (!process_name || !args || !command_client) {
     CRITICAL_LOG() << "Invalid arguments.";
     return EXIT_FAILURE;
   }
 
-  const char* feedback_dir_ptr = args->feedback_dir;
+  const fastocloud::StreamParameters* sargs = static_cast<const fastocloud::StreamParameters*>(args);
+  const char* feedback_dir_ptr = sargs->cmd_args.feedback_dir;
   if (!feedback_dir_ptr) {
     CRITICAL_LOG() << "Define " FEEDBACK_DIR_FIELD " variable and make it valid";
     return EXIT_FAILURE;
   }
 
-  const char* streamlink_path_ptr = args->streamlink_path;
+  const char* streamlink_path_ptr = sargs->cmd_args.streamlink_path;
   if (!streamlink_path_ptr) {
     CRITICAL_LOG() << "Define streamlink path variable and make it valid";
     return EXIT_FAILURE;
   }
 
-  const fastocloud::StreamConfig* config_args_map = static_cast<const fastocloud::StreamConfig*>(config_args);
-  common::logging::LOG_LEVEL logs_level = static_cast<common::logging::LOG_LEVEL>(args->log_level);
+  common::logging::LOG_LEVEL logs_level = static_cast<common::logging::LOG_LEVEL>(sargs->cmd_args.log_level);
   fastotv::protocol::protocol_client_t* client = static_cast<fastotv::protocol::protocol_client_t*>(command_client);
-  const fastocloud::StreamInfo* smem = static_cast<const fastocloud::StreamInfo*>(sha);
   return start_stream(process_name, common::file_system::ascii_directory_string_path(feedback_dir_ptr),
-                      common::file_system::ascii_file_string_path(streamlink_path_ptr), logs_level, *config_args_map,
-                      client, *smem);
+                      common::file_system::ascii_file_string_path(streamlink_path_ptr), logs_level, sargs->config_args,
+                      client, sargs->sha);
 }
