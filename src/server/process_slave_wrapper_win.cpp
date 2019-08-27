@@ -16,47 +16,44 @@
 
 #include <common/libev/io_loop.h>
 
-#include "server/child_stream.h"
+#include "base/stream_config_parse.h"
 
-#include "stream/stream_start_info.hpp"
+#include "server/child_stream.h"
 
 namespace fastocloud {
 namespace server {
 
-common::ErrnoError ProcessSlaveWrapper::CreateChildStreamImpl(const serialized_stream_t& config_args,
-                                                              const StreamInfo& sha,
-                                                              const std::string& feedback_dir,
-                                                              common::logging::LOG_LEVEL logs_level) {
+common::ErrnoError ProcessSlaveWrapper::CreateChildStreamImpl(const serialized_stream_t& config_args, stream_id_t sid) {
   SECURITY_ATTRIBUTES sa;
   memset(&sa, 0, sizeof(sa));
   sa.nLength = sizeof(sa);
   sa.bInheritHandle = TRUE;
-  HANDLE args_handle =
-      CreateFileMapping(INVALID_HANDLE_VALUE, &sa, PAGE_READWRITE, 0, sizeof(StreamStartInfo), nullptr);
+  std::string json;
+  if (!MakeJsonFromConfig(config_args, &json)) {
+    return common::make_errno_error(EINTR);
+  }
+
+  HANDLE args_handle = CreateFileMapping(INVALID_HANDLE_VALUE, &sa, PAGE_READWRITE, 0, json.size(), nullptr);
   if (args_handle == INVALID_HANDLE_VALUE) {
     return common::make_errno_error(errno);
   }
 
-  StreamStartInfo* param =
-      static_cast<StreamStartInfo*>(MapViewOfFile(args_handle, FILE_MAP_WRITE, 0, 0, sizeof(StreamStartInfo)));
+  void* param = MapViewOfFile(args_handle, FILE_MAP_WRITE, 0, 0, json.size());
   if (!param) {
     CloseHandle(args_handle);
     return common::make_errno_error(errno);
   }
 
-  const serialized_stream_t copy(config_args->DeepCopy());
-  param->feedback_dir = feedback_dir;
-  param->log_level = logs_level;
-  param->streamlink_path = config_.streamlink_path;
-  param->config_args = copy;
-  param->sha = sha;
+  memcpy(param, json.c_str(), json.size());
 
 #define CMD_LINE_SIZE 512
   char cmd_line[CMD_LINE_SIZE] = {0};
 #if defined(_WIN64)
-  common::SNPrintf(cmd_line, CMD_LINE_SIZE, STREAMER_EXE_NAME ".exe %llu", reinterpret_cast<LONG_PTR>(args_handle));
+  common::SNPrintf(cmd_line, CMD_LINE_SIZE, STREAMER_EXE_NAME ".exe %llu %llu", reinterpret_cast<LONG_PTR>(args_handle),
+                   json.size());
 #else
-  common::SNPrintf(cmd_line, CMD_LINE_SIZE, STREAMER_EXE_NAME ".exe %lu", reinterpret_cast<DWORD>(args_handle));
+  common::SNPrintf(cmd_line, CMD_LINE_SIZE, STREAMER_EXE_NAME ".exe %lu %llu", reinterpret_cast<DWORD>(args_handle),
+                   json.size());
 #endif
 
   STARTUPINFO si;
@@ -85,7 +82,7 @@ common::ErrnoError ProcessSlaveWrapper::CreateChildStreamImpl(const serialized_s
     return common::make_errno_error(errno);
   }
 
-  ChildStream* child = new ChildStream(loop_, sha.id);
+  ChildStream* child = new ChildStream(loop_, sid);
   loop_->RegisterChild(child, pi.hProcess);
   CloseHandle(pi.hThread);
   return common::ErrnoError();

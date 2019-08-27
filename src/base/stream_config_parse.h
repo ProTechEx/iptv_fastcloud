@@ -25,6 +25,6 @@ namespace fastocloud {
 std::unique_ptr<common::HashValue> MakeConfigFromJson(const std::string& json);
 std::unique_ptr<common::HashValue> MakeConfigFromJson(json_object* obj);
 
-bool MakeJsonFromConfig(std::shared_ptr<common::HashValue> config, json_object** json);
+bool MakeJsonFromConfig(std::shared_ptr<common::HashValue> config, std::string* json);
 
 }  // namespace fastocloud

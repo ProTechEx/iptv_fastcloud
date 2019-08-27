@@ -113,8 +113,9 @@ json_object* MakeJson(const common::Value* value) {
     if (value->GetAsHash(&hash)) {
       for (auto it = hash->begin(); it != hash->end(); ++it) {
         const common::Value::string_t key = it->first;
+        const std::string key_str = key.as_string();
         const common::Value* value = it->second;
-        json_object_object_add(result, key.data(), MakeJson(value));
+        json_object_object_add(result, key_str.c_str(), MakeJson(value));
       }
     }
     return result;
@@ -165,12 +166,18 @@ std::unique_ptr<common::HashValue> MakeConfigFromJson(json_object* obj) {
   return nullptr;
 }
 
-bool MakeJsonFromConfig(std::shared_ptr<common::HashValue> config, json_object** json) {
+bool MakeJsonFromConfig(std::shared_ptr<common::HashValue> config, std::string* json) {
   if (!config || !json) {
     return false;
   }
 
-  *json = MakeJson(config.get());
+  json_object* jobj = MakeJson(config.get());
+  if (!jobj) {
+    return false;
+  }
+
+  *json = json_object_get_string(jobj);
+  json_object_put(jobj);
   return true;
 }
 

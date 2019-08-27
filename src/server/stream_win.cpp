@@ -20,9 +20,11 @@
 #include <string>
 
 #include <common/file_system/string_path_utils.h>
+#include <common/libev/tcp/tcp_client.h>
 #include <common/sprintf.h>
 
-#include "stream/stream_start_info.hpp"
+#include "base/config_fields.h"
+#include "base/stream_config_parse.h"
 
 int main(int argc, char** argv, char** envp) {
   const std::string absolute_source_dir = common::file_system::absolute_path_from_relative(RELATIVE_SOURCE_DIR);
@@ -42,23 +44,41 @@ int main(int argc, char** argv, char** envp) {
   }
 
   const char* hid = argv[1];
+  const char* sz = argv[2];
 #ifdef _WIN64
   HANDLE param_handle = reinterpret_cast<HANDLE>(_atoi64(hid));
+  size_t size = _atoi64(sz);
 #else
   HANDLE param_handle = reinterpret_cast<HANDLE>(atol(hid));
+  size_t size = atol(sz);
 #endif
-  fastocloud::StreamStartInfo* params =
-      static_cast<fastocloud::StreamStartInfo*>(MapViewOfFile(param_handle, FILE_MAP_READ, 0, 0, 0));
-  if (!params) {
+
+  const char* params_json = static_cast<const char*>(MapViewOfFile(param_handle, FILE_MAP_READ, 0, 0, 0));
+  if (!params_json) {
     std::cerr << "Can't load shared settings: " << GetLastError();
     FreeLibrary(dll);
     return EXIT_FAILURE;
   }
 
-  const std::string new_process_name = common::MemSPrintf(STREAMER_NAME "_%s", params->sha.id);
+  const auto params = fastocloud::MakeConfigFromJson(std::string(params_json, size));
+  if (!params) {
+    std::cerr << "Invalid config json";
+    FreeLibrary(dll);
+    return EXIT_FAILURE;
+  }
+
+  common::Value* id_field = params->Find(ID_FIELD);
+  std::string sid;
+  if (!id_field || !id_field->GetAsBasicString(&sid)) {
+    std::cerr << "Define " ID_FIELD " variable and make it valid";
+    FreeLibrary(dll);
+    return EXIT_FAILURE;
+  }
+
+  const std::string new_process_name = common::MemSPrintf(STREAMER_NAME "_%s", sid);
   const char* new_name = new_process_name.c_str();
-  int res = stream_exec_func(new_name, params, nullptr);
-  UnmapViewOfFile(params);
+  int res = stream_exec_func(new_name, params.get(), nullptr);
+  UnmapViewOfFile(params_json);
   FreeLibrary(dll);
   return res;
 }
