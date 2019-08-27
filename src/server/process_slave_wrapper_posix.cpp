@@ -33,7 +33,7 @@
 
 #include "stream/stream_wrapper.h"
 
-#include "pipe/pipe_client.h"
+#include "pipe/client.h"
 
 namespace {
 common::ErrnoError CreatePipe(int* read_client_fd, int* write_client_fd) {
@@ -123,8 +123,7 @@ common::ErrnoError ProcessSlaveWrapper::CreateChildStreamImpl(const serialized_s
     }
 #endif
 
-    pipe::ProtocoledPipeClient* client =
-        new pipe::ProtocoledPipeClient(nullptr, read_command_client, write_responce_client);
+    pipe::Client* client = new pipe::Client(nullptr, read_command_client, write_responce_client);
     client->SetName(sid);
     int res = stream_exec_func(new_name, config_args.get(), client);
     client->Close();
@@ -144,8 +143,7 @@ common::ErrnoError ProcessSlaveWrapper::CreateChildStreamImpl(const serialized_s
       DEBUG_MSG_ERROR(errn, common::logging::LOG_LEVEL_WARNING);
     }
 
-    pipe::ProtocoledPipeClient* pipe_client =
-        new pipe::ProtocoledPipeClient(loop_, read_responce_client, write_requests_client);
+    pipe::Client* pipe_client = new pipe::Client(loop_, read_responce_client, write_requests_client);
     pipe_client->SetName(sid);
     loop_->RegisterClient(pipe_client);
     ChildStream* new_channel = new ChildStream(loop_, sid);
