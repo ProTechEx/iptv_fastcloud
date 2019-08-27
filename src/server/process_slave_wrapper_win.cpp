@@ -32,20 +32,22 @@ common::ErrnoError ProcessSlaveWrapper::CreateChildStreamImpl(const serialized_s
   sa.nLength = sizeof(sa);
   sa.bInheritHandle = TRUE;
   HANDLE args_handle =
-      CreateFileMapping(INVALID_HANDLE_VALUE, &sa, PAGE_READWRITE, 0, sizeof(StreamParameters), nullptr);
+      CreateFileMapping(INVALID_HANDLE_VALUE, &sa, PAGE_READWRITE, 0, sizeof(StreamStartInfo), nullptr);
   if (args_handle == INVALID_HANDLE_VALUE) {
     return common::make_errno_error(errno);
   }
 
-  StreamParameters* param =
-      static_cast<StreamParameters*>(MapViewOfFile(args_handle, FILE_MAP_WRITE, 0, 0, sizeof(StreamParameters)));
+  StreamStartInfo* param =
+      static_cast<StreamStartInfo*>(MapViewOfFile(args_handle, FILE_MAP_WRITE, 0, 0, sizeof(StreamStartInfo)));
   if (!param) {
     CloseHandle(args_handle);
     return common::make_errno_error(errno);
   }
 
   const serialized_stream_t copy(config_args->DeepCopy());
-  param->cmd_args = {feedback_dir.c_str(), logs_level, config_.streamlink_path.c_str()};
+  param->feedback_dir = feedback_dir;
+  param->log_level = logs_level;
+  param->streamlink_path = config_.streamlink_path;
   param->config_args = copy;
   param->sha = sha;
 

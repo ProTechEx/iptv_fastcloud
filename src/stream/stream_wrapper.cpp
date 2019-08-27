@@ -63,7 +63,7 @@ int stream_exec(const char* process_name, const void* args, void* command_client
     return EXIT_FAILURE;
   }
 
-  const fastocloud::StartStreamInfo* sargs = static_cast<const fastocloud::StartStreamInfo*>(args);
+  const fastocloud::StreamStartInfo* sargs = static_cast<const fastocloud::StreamStartInfo*>(args);
   const std::string feedback_dir = sargs->feedback_dir;
   if (feedback_dir.empty()) {
     CRITICAL_LOG() << "Define " FEEDBACK_DIR_FIELD " variable and make it valid";
