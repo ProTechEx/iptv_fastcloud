@@ -120,9 +120,6 @@ void streams_init(int argc, char** argv, EncoderType enc) {
     return;
   }
 
-#if defined(OS_POSIX)
-  signal(SIGPIPE, SIG_IGN);
-#endif
 #ifdef HAVE_X11
   XInitThreads();
 #endif

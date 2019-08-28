@@ -33,15 +33,23 @@
 
 #include "stream/stream_wrapper.h"
 
+#define PIPE 1
+
+#if PIPE
 #include "pipe/client.h"
+#else
+#include "tcp/client.h"
+#endif
 
 namespace {
-common::ErrnoError CreatePipe(int* read_client_fd, int* write_client_fd) {
+#if PIPE
+common::ErrnoError CreatePipe(common::net::socket_descr_t* read_client_fd,
+                              common::net::socket_descr_t* write_client_fd) {
   if (!read_client_fd || !write_client_fd) {
     return common::make_errno_error_inval();
   }
 
-  int pipefd[2] = {0};
+  int pipefd[2] = {INVALID_DESCRIPTOR, INVALID_DESCRIPTOR};
   int res = pipe(pipefd);
   if (res == ERROR_RESULT_VALUE) {
     return common::make_errno_error(errno);
@@ -51,25 +59,59 @@ common::ErrnoError CreatePipe(int* read_client_fd, int* write_client_fd) {
   *write_client_fd = pipefd[1];
   return common::ErrnoError();
 }
+#else
+common::ErrnoError CreateSocketPair(common::net::socket_descr_t* parent_sock, common::net::socket_descr_t* child_sock) {
+  if (!parent_sock || !child_sock) {
+    return common::make_errno_error_inval();
+  }
+
+  int socks[2] = {INVALID_DESCRIPTOR, INVALID_DESCRIPTOR};
+  int res = socketpair(AF_LOCAL, SOCK_STREAM, 0, socks);
+  if (res == ERROR_RESULT_VALUE) {
+    return common::make_errno_error(errno);
+  }
+
+  *parent_sock = socks[1];
+  *child_sock = socks[0];
+  return common::ErrnoError();
+}
+#endif
 }  // namespace
 
 namespace fastocloud {
 namespace server {
 
 common::ErrnoError ProcessSlaveWrapper::CreateChildStreamImpl(const serialized_stream_t& config_args, stream_id_t sid) {
-  int read_command_client = 0;
-  int write_requests_client = 0;
+#if PIPE
+  common::net::socket_descr_t read_command_client;
+  common::net::socket_descr_t write_requests_client;
   common::ErrnoError err = CreatePipe(&read_command_client, &write_requests_client);
   if (err) {
     return err;
   }
 
-  int read_responce_client = 0;
-  int write_responce_client = 0;
+  common::net::socket_descr_t read_responce_client;
+  common::net::socket_descr_t write_responce_client;
   err = CreatePipe(&read_responce_client, &write_responce_client);
+  if (err) {
+    common::ErrnoError errn = common::file_system::close_descriptor(read_command_client);
+    if (errn) {
+      DEBUG_MSG_ERROR(errn, common::logging::LOG_LEVEL_WARNING);
+    }
+    errn = common::file_system::close_descriptor(write_requests_client);
+    if (errn) {
+      DEBUG_MSG_ERROR(errn, common::logging::LOG_LEVEL_WARNING);
+    }
+    return err;
+  }
+#else
+  common::net::socket_descr_t parent_sock;
+  common::net::socket_descr_t child_sock;
+  common::ErrnoError err = CreateSocketPair(&parent_sock, &child_sock);
   if (err) {
     return err;
   }
+#endif
 
 #if !defined(TEST)
   pid_t pid = fork();
@@ -111,6 +153,7 @@ common::ErrnoError ProcessSlaveWrapper::CreateChildStreamImpl(const serialized_s
 #pragma message "Please implement"
 #endif
 
+#if PIPE
 #if !defined(TEST)
     // close not needed pipes
     common::ErrnoError errn = common::file_system::close_descriptor(read_responce_client);
@@ -122,8 +165,16 @@ common::ErrnoError ProcessSlaveWrapper::CreateChildStreamImpl(const serialized_s
       DEBUG_MSG_ERROR(errn, common::logging::LOG_LEVEL_WARNING);
     }
 #endif
-
     pipe::Client* client = new pipe::Client(nullptr, read_command_client, write_responce_client);
+#else
+    // close not needed sock
+    common::ErrnoError errn = common::file_system::close_descriptor(parent_sock);
+    if (errn) {
+      DEBUG_MSG_ERROR(errn, common::logging::LOG_LEVEL_WARNING);
+    }
+    tcp::Client* client = new tcp::Client(nullptr, common::net::socket_info(child_sock));
+#endif
+
     client->SetName(sid);
     int res = stream_exec_func(new_name, config_args.get(), client);
     client->Close();
@@ -133,6 +184,7 @@ common::ErrnoError ProcessSlaveWrapper::CreateChildStreamImpl(const serialized_s
   } else if (pid < 0) {
     ERROR_LOG() << "Failed to start children!";
   } else {
+#if PIPE
     // close not needed pipes
     common::ErrnoError errn = common::file_system::close_descriptor(read_command_client);
     if (errn) {
@@ -142,12 +194,19 @@ common::ErrnoError ProcessSlaveWrapper::CreateChildStreamImpl(const serialized_s
     if (err) {
       DEBUG_MSG_ERROR(errn, common::logging::LOG_LEVEL_WARNING);
     }
-
-    pipe::Client* pipe_client = new pipe::Client(loop_, read_responce_client, write_requests_client);
-    pipe_client->SetName(sid);
-    loop_->RegisterClient(pipe_client);
+    pipe::Client* client = new pipe::Client(loop_, read_responce_client, write_requests_client);
+#else
+    // close not needed sock
+    common::ErrnoError errn = common::file_system::close_descriptor(child_sock);
+    if (errn) {
+      DEBUG_MSG_ERROR(errn, common::logging::LOG_LEVEL_WARNING);
+    }
+    tcp::Client* client = new tcp::Client(loop_, common::net::socket_info(parent_sock));
+#endif
+    client->SetName(sid);
+    loop_->RegisterClient(client);
     ChildStream* new_channel = new ChildStream(loop_, sid);
-    new_channel->SetClient(pipe_client);
+    new_channel->SetClient(client);
     loop_->RegisterChild(new_channel, pid);
   }
 

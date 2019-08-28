@@ -12,9 +12,14 @@
     along with fastocloud.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <iostream>
-
 #include <unistd.h>
+#if defined(OS_WIN)
+#include <winsock2.h>
+#else
+#include <signal.h>
+#endif
+
+#include <iostream>
 
 #include <common/file_system/file.h>
 #include <common/file_system/file_system.h>
@@ -37,6 +42,22 @@
   "    --reload   force running instance to reread configuration file\n"
 
 namespace {
+
+#if defined(OS_WIN)
+struct WinsockInit {
+  WinsockInit() {
+    WSADATA d;
+    if (WSAStartup(0x202, &d) != 0) {
+      _exit(1);
+    }
+  }
+  ~WinsockInit() { WSACleanup(); }
+} winsock_init;
+#else
+struct SigIgnInit {
+  SigIgnInit() { signal(SIGPIPE, SIG_IGN); }
+} sig_init;
+#endif
 
 const size_t kMaxSizeLogFile = 10 * 1024 * 1024;  // 10 MB
 
