@@ -60,6 +60,9 @@ SET(PIPE_SOURCES ${CMAKE_SOURCE_DIR}/src/server/pipe/client.cpp)
 SET(TCP_HEADERS ${CMAKE_SOURCE_DIR}/src/server/tcp/client.h)
 SET(TCP_SOURCES ${CMAKE_SOURCE_DIR}/src/server/tcp/client.cpp)
 
+SET(UTILS_HEADERS ${CMAKE_SOURCE_DIR}/src/server/utils/utils.h)
+SET(UTILS_SOURCES ${CMAKE_SOURCE_DIR}/src/server/utils/utils.cpp)
+
 SET(OPTIONS_HEADERS ${CMAKE_SOURCE_DIR}/src/server/options/options.h)
 SET(OPTIONS_SOURCES ${CMAKE_SOURCE_DIR}/src/server/options/options.cpp)
 
@@ -176,6 +179,7 @@ SET(SERVER_HEADERS
   ${SERVER_DAEMON_HEADERS}
   ${PIPE_HEADERS}
   ${TCP_HEADERS}
+  ${UTILS_HEADERS}
   ${OPTIONS_HEADERS}
 )
 SET(SERVER_SOURCES
@@ -193,6 +197,7 @@ SET(SERVER_SOURCES
   ${SERVER_DAEMON_SOURCES}
   ${PIPE_SOURCES}
   ${TCP_SOURCES}
+  ${UTILS_SOURCES}
   ${OPTIONS_SOURCES}
 )
 

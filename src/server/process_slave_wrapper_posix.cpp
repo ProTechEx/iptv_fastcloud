@@ -20,7 +20,6 @@
 
 #include <dlfcn.h>
 #include <sys/wait.h>
-
 #include <unistd.h>
 
 #include <common/file_system/file_system.h>
@@ -30,6 +29,7 @@
 
 #include "server/child_stream.h"
 #include "server/daemon/server.h"
+#include "server/utils/utils.h"
 
 #include "stream/stream_wrapper.h"
 
@@ -40,43 +40,6 @@
 #else
 #include "tcp/client.h"
 #endif
-
-namespace {
-#if PIPE
-common::ErrnoError CreatePipe(common::net::socket_descr_t* read_client_fd,
-                              common::net::socket_descr_t* write_client_fd) {
-  if (!read_client_fd || !write_client_fd) {
-    return common::make_errno_error_inval();
-  }
-
-  int pipefd[2] = {INVALID_DESCRIPTOR, INVALID_DESCRIPTOR};
-  int res = pipe(pipefd);
-  if (res == ERROR_RESULT_VALUE) {
-    return common::make_errno_error(errno);
-  }
-
-  *read_client_fd = pipefd[0];
-  *write_client_fd = pipefd[1];
-  return common::ErrnoError();
-}
-#else
-common::ErrnoError CreateSocketPair(common::net::socket_descr_t* parent_sock, common::net::socket_descr_t* child_sock) {
-  if (!parent_sock || !child_sock) {
-    return common::make_errno_error_inval();
-  }
-
-  int socks[2] = {INVALID_DESCRIPTOR, INVALID_DESCRIPTOR};
-  int res = socketpair(AF_LOCAL, SOCK_STREAM, 0, socks);
-  if (res == ERROR_RESULT_VALUE) {
-    return common::make_errno_error(errno);
-  }
-
-  *parent_sock = socks[1];
-  *child_sock = socks[0];
-  return common::ErrnoError();
-}
-#endif
-}  // namespace
 
 namespace fastocloud {
 namespace server {
