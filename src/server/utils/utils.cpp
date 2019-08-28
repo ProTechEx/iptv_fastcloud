@@ -16,6 +16,67 @@
 
 #include <unistd.h>
 
+namespace {
+#if defined(OS_WIN)
+int socketpair(int domain, int type, int protocol, SOCKET socks[2]) {
+  SOCKET listener = socket(domain, type, protocol);
+  if (listener == INVALID_SOCKET_VALUE) {
+    return SOCKET_ERROR;
+  }
+
+  struct sockaddr_in addr = {0};
+  addr.sin_family = domain;
+  addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+  addr.sin_port = 0;
+
+  socklen_t addr_size = sizeof(addr);
+
+  struct sockaddr_in adr2;
+  socklen_t adr2_size = sizeof(adr2);
+  if (bind(listener, (struct sockaddr*)&addr, addr_size) == SOCKET_ERROR) {
+    goto error;
+  }
+  if (getsockname(listener, (struct sockaddr*)&addr, &addr_size) == SOCKET_ERROR) {
+    goto error;
+  }
+  if (listen(listener, 1) == SOCKET_ERROR) {
+    goto error;
+  }
+
+  socks[0] = socket(domain, type, protocol);
+  if (socks[0] == INVALID_SOCKET_VALUE) {
+    goto error;
+  }
+
+  if (connect(socks[0], (struct sockaddr*)&addr, addr_size) == SOCKET_ERROR) {
+    goto error;
+  }
+
+  socks[1] = accept(listener, nullptr, nullptr);
+  if (socks[1] == INVALID_SOCKET_VALUE) {
+    goto error;
+  }
+
+  if (getpeername(socks[0], (struct sockaddr*)&addr, &addr_size)) {
+    goto error;
+  }
+
+  if (getsockname(socks[1], (struct sockaddr*)&adr2, &adr2_size)) {
+    goto error;
+  }
+
+  closesocket(listener);
+  return 0;
+
+error:
+  closesocket(listener);
+  closesocket(socks[0]);
+  closesocket(socks[1]);
+  return ERROR_RESULT_VALUE;
+}
+#endif
+}  // namespace
+
 namespace fastocloud {
 namespace server {
 
@@ -43,8 +104,12 @@ common::ErrnoError CreateSocketPair(common::net::socket_descr_t* parent_sock, co
     return common::make_errno_error_inval();
   }
 
-  int socks[2] = {INVALID_DESCRIPTOR, INVALID_DESCRIPTOR};
+  common::net::socket_descr_t socks[2];
+#if defined(OS_POSIX)
   int res = socketpair(AF_LOCAL, SOCK_STREAM, 0, socks);
+#else
+  int res = socketpair(AF_INET, SOCK_STREAM, 0, socks);
+#endif
   if (res == ERROR_RESULT_VALUE) {
     return common::make_errno_error(errno);
   }

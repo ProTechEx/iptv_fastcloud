@@ -21,82 +21,7 @@
 
 #include "server/child_stream.h"
 #include "server/tcp/client.h"
-
-namespace {
-
-int socketpair(int domain, int type, int protocol, SOCKET socks[2]) {
-  SOCKET listener = socket(domain, type, protocol);
-  if (listener == INVALID_SOCKET_VALUE) {
-    return SOCKET_ERROR;
-  }
-
-  struct sockaddr_in addr = {0};
-  addr.sin_family = domain;
-  addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
-  addr.sin_port = 0;
-
-  socklen_t addr_size = sizeof(addr);
-
-  struct sockaddr_in adr2;
-  socklen_t adr2_size = sizeof(adr2);
-  if (bind(listener, (struct sockaddr*)&addr, addr_size) == SOCKET_ERROR) {
-    goto error;
-  }
-  if (getsockname(listener, (struct sockaddr*)&addr, &addr_size) == SOCKET_ERROR) {
-    goto error;
-  }
-  if (listen(listener, 1) == SOCKET_ERROR) {
-    goto error;
-  }
-
-  socks[0] = socket(domain, type, protocol);
-  if (socks[0] == INVALID_SOCKET_VALUE) {
-    goto error;
-  }
-
-  if (connect(socks[0], (struct sockaddr*)&addr, addr_size) == SOCKET_ERROR) {
-    goto error;
-  }
-
-  socks[1] = accept(listener, nullptr, nullptr);
-  if (socks[1] == INVALID_SOCKET_VALUE) {
-    goto error;
-  }
-
-  if (getpeername(socks[0], (struct sockaddr*)&addr, &addr_size)) {
-    goto error;
-  }
-
-  if (getsockname(socks[1], (struct sockaddr*)&adr2, &adr2_size)) {
-    goto error;
-  }
-
-  closesocket(listener);
-  return 0;
-
-error:
-  closesocket(listener);
-  closesocket(socks[0]);
-  closesocket(socks[1]);
-  return ERROR_RESULT_VALUE;
-}
-
-common::ErrnoError CreateSocketPair(common::net::socket_descr_t* parent_sock, common::net::socket_descr_t* child_sock) {
-  if (!parent_sock || !child_sock) {
-    return common::make_errno_error_inval();
-  }
-
-  SOCKET socks[2] = {INVALID_SOCKET_VALUE, INVALID_SOCKET_VALUE};
-  int res = socketpair(AF_INET, SOCK_STREAM, 0, socks);
-  if (res == ERROR_RESULT_VALUE) {
-    return common::make_errno_error(errno);
-  }
-
-  *parent_sock = socks[1];
-  *child_sock = socks[0];
-  return common::ErrnoError();
-}
-}  // namespace
+#include "server/utils/utils.h"
 
 namespace fastocloud {
 namespace server {
@@ -145,16 +70,13 @@ common::ErrnoError ProcessSlaveWrapper::CreateChildStreamImpl(const serialized_s
   PROCESS_INFORMATION pi;
   memset(&pi, 0, sizeof(pi));
   memset(&si, 0, sizeof(si));
-  si.cb = sizeof(si);
   if (!CreateProcess(nullptr, cmd_line, nullptr, nullptr, TRUE, CREATE_SUSPENDED, nullptr, nullptr, &si, &pi)) {
     CloseHandle(args_handle);
     return common::make_errno_error(errno);
   }
 
-  if (!UnmapViewOfFile(param)) {
-  }
-  if (!CloseHandle(args_handle)) {
-  }
+  UnmapViewOfFile(param);
+  CloseHandle(args_handle);
 
   if (ResumeThread(pi.hThread) == -1) {
     if (!TerminateProcess(pi.hProcess, EXIT_FAILURE)) {
