@@ -43,27 +43,27 @@ common::ErrnoError ProcessSlaveWrapper::CreateChildStreamImpl(const serialized_s
     return common::make_errno_error(EINTR);
   }
 
-  HANDLE args_handle = CreateFileMapping(INVALID_HANDLE_VALUE, &sa, PAGE_READWRITE, 0, json.size(), sid.c_str());
+  const size_t proto_info_len = sizeof(WSAPROTOCOL_INFO);
+  const size_t allocate_memory = proto_info_len + json.size();
+  HANDLE args_handle = CreateFileMapping(INVALID_HANDLE_VALUE, &sa, PAGE_READWRITE, 0, allocate_memory, nullptr);
   if (args_handle == INVALID_HANDLE_VALUE) {
     return common::make_errno_error(errno);
   }
 
-  void* param = MapViewOfFile(args_handle, FILE_MAP_WRITE, 0, 0, json.size());
+  char* param = static_cast<char*>(MapViewOfFile(args_handle, FILE_MAP_WRITE, 0, 0, allocate_memory));
   if (!param) {
     CloseHandle(args_handle);
     return common::make_errno_error(errno);
   }
 
-  memcpy(param, json.c_str(), json.size());
-
 #define CMD_LINE_SIZE 512
   char cmd_line[CMD_LINE_SIZE] = {0};
 #if defined(_WIN64)
-  common::SNPrintf(cmd_line, CMD_LINE_SIZE, STREAMER_EXE_NAME ".exe %llu %llu %llu",
-                   reinterpret_cast<UINT_PTR>(args_handle), json.size(), child_sock);
+  common::SNPrintf(cmd_line, CMD_LINE_SIZE, STREAMER_EXE_NAME ".exe %llu %llu", reinterpret_cast<UINT_PTR>(args_handle),
+                   allocate_memory);
 #else
-  common::SNPrintf(cmd_line, CMD_LINE_SIZE, STREAMER_EXE_NAME ".exe %lu %lu %lu", reinterpret_cast<DWORD>(args_handle),
-                   json.size(), child_sock);
+  common::SNPrintf(cmd_line, CMD_LINE_SIZE, STREAMER_EXE_NAME ".exe %lu %lu", reinterpret_cast<DWORD>(args_handle),
+                   allocate_memory);
 #endif
 
   STARTUPINFO si;
@@ -71,9 +71,23 @@ common::ErrnoError ProcessSlaveWrapper::CreateChildStreamImpl(const serialized_s
   memset(&pi, 0, sizeof(pi));
   memset(&si, 0, sizeof(si));
   if (!CreateProcess(nullptr, cmd_line, nullptr, nullptr, TRUE, CREATE_SUSPENDED, nullptr, nullptr, &si, &pi)) {
+    UnmapViewOfFile(param);
     CloseHandle(args_handle);
     return common::make_errno_error(errno);
   }
+
+  WSAPROTOCOL_INFO pin;
+  if (WSADuplicateSocket(child_sock, pi.dwProcessId, &pin) != 0) {
+    UnmapViewOfFile(param);
+    CloseHandle(args_handle);
+    CloseHandle(pi.hProcess);
+    CloseHandle(pi.hThread);
+    return common::make_errno_error(errno);
+  }
+
+  closesocket(child_sock);
+  memcpy(param, &pin, proto_info_len);
+  memcpy(param + proto_info_len, json.c_str(), json.size());
 
   UnmapViewOfFile(param);
   CloseHandle(args_handle);

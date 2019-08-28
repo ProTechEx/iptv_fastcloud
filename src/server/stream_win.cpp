@@ -29,9 +29,21 @@
 
 #include "server/tcp/client.h"
 
+namespace {
+struct WinsockInit {
+  WinsockInit() {
+    WSADATA d;
+    if (WSAStartup(0x202, &d) != 0) {
+      _exit(1);
+    }
+  }
+  ~WinsockInit() { WSACleanup(); }
+} winsock_init;
+}  // namespace
+
 int main(int argc, char** argv) {
-  if (argc != 4) {
-    std::cerr << "Must be 4 arguments";
+  if (argc != 3) {
+    std::cerr << "Must be 3 arguments";
     return EXIT_FAILURE;
   }
 
@@ -53,33 +65,34 @@ int main(int argc, char** argv) {
 
   const char* hid = argv[1];
   const char* sz = argv[2];
-  const char* csock = argv[3];
 #if defined(_WIN64)
   HANDLE param_handle = reinterpret_cast<HANDLE>(_atoi64(hid));
   size_t size = _atoi64(sz);
-  common::net::socket_descr_t cfd = _atoi64(csock);
 #else
   HANDLE param_handle = reinterpret_cast<HANDLE>(atol(hid));
   size_t size = atol(sz);
-  common::net::socket_descr_t cfd = atol(csock);
 #endif
 
-  const char* params_json = static_cast<const char*>(MapViewOfFile(param_handle, FILE_MAP_READ, 0, 0, 0));
-  if (!params_json) {
+  char* params = static_cast<char*>(MapViewOfFile(param_handle, FILE_MAP_READ, 0, 0, 0));
+  if (!params) {
     std::cerr << "Can't load shared settings: " << GetLastError();
     FreeLibrary(dll);
     return EXIT_FAILURE;
   }
 
-  const auto params = fastocloud::MakeConfigFromJson(std::string(params_json, size));
+  const size_t proto_info_len = sizeof(WSAPROTOCOL_INFO);
+  WSAPROTOCOL_INFO pin;
+  memcpy(&pin, params, proto_info_len);
+  const char* params_json = params + proto_info_len;
+  const auto params_config = fastocloud::MakeConfigFromJson(std::string(params_json, size - proto_info_len));
   UnmapViewOfFile(params_json);
-  if (!params) {
+  if (!params_config) {
     std::cerr << "Invalid config json";
     FreeLibrary(dll);
     return EXIT_FAILURE;
   }
 
-  common::Value* id_field = params->Find(ID_FIELD);
+  common::Value* id_field = params_config->Find(ID_FIELD);
   std::string sid;
   if (!id_field || !id_field->GetAsBasicString(&sid)) {
     std::cerr << "Define " ID_FIELD " variable and make it valid";
@@ -87,9 +100,10 @@ int main(int argc, char** argv) {
     return EXIT_FAILURE;
   }
 
+  common::net::socket_descr_t cfd = WSASocket(pin.iAddressFamily, pin.iSocketType, pin.iProtocol, &pin, 0, 0);
   const std::string new_process_name = common::MemSPrintf(STREAMER_NAME "_%s", sid);
   const char* new_name = new_process_name.c_str();
-  int res = stream_exec_func(new_name, params.get(),
+  int res = stream_exec_func(new_name, params_config.get(),
                              new fastocloud::server::tcp::Client(nullptr, common::net::socket_info(cfd)));
   FreeLibrary(dll);
   return res;

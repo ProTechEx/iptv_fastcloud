@@ -43,7 +43,7 @@ int socketpair(int domain, int type, int protocol, SOCKET socks[2]) {
     goto error;
   }
 
-  socks[0] = socket(domain, type, protocol);
+  socks[0] = WSASocket(domain, type, protocol, nullptr, 0, 0);//socket(domain, type, protocol);
   if (socks[0] == INVALID_SOCKET_VALUE) {
     goto error;
   }

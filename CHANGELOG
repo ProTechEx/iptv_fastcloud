@@ -1,6 +1,7 @@
 1.6.0 /
 [Alexandr Topilski
 - Amazon Kinesis Video Streams integration
+- Windows msys2 build
 
 1.5.0 / August 22, 2019
 [Alexandr Topilski]
