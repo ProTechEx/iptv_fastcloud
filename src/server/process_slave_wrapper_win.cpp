@@ -23,6 +23,7 @@
 #include "server/tcp/client.h"
 
 namespace {
+
 int socketpair(int domain, int type, int protocol, SOCKET socks[2]) {
   SOCKET listener = socket(domain, type, protocol);
   if (listener == INVALID_SOCKET_VALUE) {
@@ -77,7 +78,23 @@ error:
   closesocket(listener);
   closesocket(socks[0]);
   closesocket(socks[1]);
-  return SOCKET_ERROR;
+  return ERROR_RESULT_VALUE;
+}
+
+common::ErrnoError CreateSocketPair(common::net::socket_descr_t* parent_sock, common::net::socket_descr_t* child_sock) {
+  if (!parent_sock || !child_sock) {
+    return common::make_errno_error_inval();
+  }
+
+  SOCKET socks[2] = {INVALID_SOCKET_VALUE, INVALID_SOCKET_VALUE};
+  int res = socketpair(AF_INET, SOCK_STREAM, 0, socks);
+  if (res == ERROR_RESULT_VALUE) {
+    return common::make_errno_error(errno);
+  }
+
+  *parent_sock = socks[1];
+  *child_sock = socks[0];
+  return common::ErrnoError();
 }
 }  // namespace
 
@@ -85,14 +102,12 @@ namespace fastocloud {
 namespace server {
 
 common::ErrnoError ProcessSlaveWrapper::CreateChildStreamImpl(const serialized_stream_t& config_args, stream_id_t sid) {
-  SOCKET socks[2] = {INVALID_SOCKET_VALUE, INVALID_SOCKET_VALUE};
-  int res = socketpair(AF_INET, SOCK_STREAM, 0, socks);
-  if (res == SOCKET_ERROR) {
-    return common::make_errno_error(EINTR);
+  common::net::socket_descr_t parent_sock;
+  common::net::socket_descr_t child_sock;
+  common::ErrnoError err = CreateSocketPair(&parent_sock, &child_sock);
+  if (err) {
+    return err;
   }
-
-  SOCKET parent_sock = socks[1];
-  SOCKET child_sock = socks[0];
 
   SECURITY_ATTRIBUTES sa;
   memset(&sa, 0, sizeof(sa));
@@ -103,7 +118,7 @@ common::ErrnoError ProcessSlaveWrapper::CreateChildStreamImpl(const serialized_s
     return common::make_errno_error(EINTR);
   }
 
-  HANDLE args_handle = CreateFileMapping(INVALID_HANDLE_VALUE, &sa, PAGE_READWRITE, 0, json.size(), nullptr);
+  HANDLE args_handle = CreateFileMapping(INVALID_HANDLE_VALUE, &sa, PAGE_READWRITE, 0, json.size(), sid.c_str());
   if (args_handle == INVALID_HANDLE_VALUE) {
     return common::make_errno_error(errno);
   }
@@ -119,11 +134,11 @@ common::ErrnoError ProcessSlaveWrapper::CreateChildStreamImpl(const serialized_s
 #define CMD_LINE_SIZE 512
   char cmd_line[CMD_LINE_SIZE] = {0};
 #if defined(_WIN64)
-  common::SNPrintf(cmd_line, CMD_LINE_SIZE, STREAMER_EXE_NAME ".exe %llu %llu %llu %llu",
-                   reinterpret_cast<UINT_PTR>(args_handle), json.size(), parent_sock, child_sock);
+  common::SNPrintf(cmd_line, CMD_LINE_SIZE, STREAMER_EXE_NAME ".exe %llu %llu %llu",
+                   reinterpret_cast<UINT_PTR>(args_handle), json.size(), child_sock);
 #else
-  common::SNPrintf(cmd_line, CMD_LINE_SIZE, STREAMER_EXE_NAME ".exe %lu %lu %lu %lu",
-                   reinterpret_cast<DWORD>(args_handle), json.size(), parent_sock, child_sock);
+  common::SNPrintf(cmd_line, CMD_LINE_SIZE, STREAMER_EXE_NAME ".exe %lu %lu %lu", reinterpret_cast<DWORD>(args_handle),
+                   json.size(), child_sock);
 #endif
 
   STARTUPINFO si;
@@ -151,8 +166,6 @@ common::ErrnoError ProcessSlaveWrapper::CreateChildStreamImpl(const serialized_s
     CloseHandle(pi.hThread);
     return common::make_errno_error(errno);
   }
-
-  closesocket(child_sock);
 
   tcp::Client* sock_client = new tcp::Client(loop_, common::net::socket_info(parent_sock));
   sock_client->SetName(sid);

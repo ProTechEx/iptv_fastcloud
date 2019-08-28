@@ -30,8 +30,8 @@
 #include "server/tcp/client.h"
 
 int main(int argc, char** argv) {
-  if (argc != 5) {
-    std::cerr << "Must be 5 arguments";
+  if (argc != 4) {
+    std::cerr << "Must be 4 arguments";
     return EXIT_FAILURE;
   }
 
@@ -53,21 +53,17 @@ int main(int argc, char** argv) {
 
   const char* hid = argv[1];
   const char* sz = argv[2];
-  const char* psock = argv[3];
-  const char* csock = argv[4];
+  const char* csock = argv[3];
 #if defined(_WIN64)
   HANDLE param_handle = reinterpret_cast<HANDLE>(_atoi64(hid));
   size_t size = _atoi64(sz);
-  common::net::socket_descr_t pfd = _atoi64(psock);
   common::net::socket_descr_t cfd = _atoi64(csock);
 #else
   HANDLE param_handle = reinterpret_cast<HANDLE>(atol(hid));
   size_t size = atol(sz);
-  common::net::socket_descr_t pfd = atol(psock);
   common::net::socket_descr_t cfd = atol(csock);
 #endif
 
-  closesocket(pfd);
   const char* params_json = static_cast<const char*>(MapViewOfFile(param_handle, FILE_MAP_READ, 0, 0, 0));
   if (!params_json) {
     std::cerr << "Can't load shared settings: " << GetLastError();
