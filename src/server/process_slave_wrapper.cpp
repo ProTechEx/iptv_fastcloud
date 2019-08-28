@@ -552,8 +552,7 @@ common::ErrnoError ProcessSlaveWrapper::StreamDataReceived(stream_client_t* pipe
   std::string input_command;
   common::ErrnoError err = pipe_client->ReadCommand(&input_command);
   if (err) {
-    return err;  // i don't want handle spam, command must be foramated according
-                 // protocol
+    return err;  // i don't want to handle spam, command must be formated according protocol
   }
 
   fastotv::protocol::request_t* req = nullptr;

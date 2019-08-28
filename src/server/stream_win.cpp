@@ -21,27 +21,17 @@
 #include <common/file_system/string_path_utils.h>
 #include <common/sprintf.h>
 
-#include <common/libev/descriptor_client.h>
+#include <common/libev/tcp/tcp_client.h>
 #include <fastotv/protocol/protocol.h>
 
 #include "base/config_fields.h"
 #include "base/stream_config_parse.h"
 
-namespace {
-
-class ProtocoledClient : public fastotv::protocol::ProtocolClient<common::libev::DescriptorClient> {
- public:
-  typedef fastotv::protocol::ProtocolClient<common::libev::DescriptorClient> base_class;
-  const char* ClassName() const override { return "ProtocoledClient"; }
-
-  ProtocoledClient(descriptor_t fd) : base_class(nullptr, fd) {}
-};
-
-}  // namespace
+#include "server/tcp/client.h"
 
 int main(int argc, char** argv) {
-  if (argc != 4) {
-    std::cerr << "Must be 3 arguments";
+  if (argc != 5) {
+    std::cerr << "Must be 5 arguments";
     return EXIT_FAILURE;
   }
 
@@ -63,15 +53,21 @@ int main(int argc, char** argv) {
 
   const char* hid = argv[1];
   const char* sz = argv[2];
-  descriptor_t fd = atoi(argv[3]);
+  const char* psock = argv[3];
+  const char* csock = argv[4];
 #if defined(_WIN64)
   HANDLE param_handle = reinterpret_cast<HANDLE>(_atoi64(hid));
   size_t size = _atoi64(sz);
+  common::net::socket_descr_t pfd = _atoi64(psock);
+  common::net::socket_descr_t cfd = _atoi64(csock);
 #else
   HANDLE param_handle = reinterpret_cast<HANDLE>(atol(hid));
   size_t size = atol(sz);
+  common::net::socket_descr_t pfd = atol(psock);
+  common::net::socket_descr_t cfd = atol(csock);
 #endif
 
+  closesocket(pfd);
   const char* params_json = static_cast<const char*>(MapViewOfFile(param_handle, FILE_MAP_READ, 0, 0, 0));
   if (!params_json) {
     std::cerr << "Can't load shared settings: " << GetLastError();
@@ -97,7 +93,8 @@ int main(int argc, char** argv) {
 
   const std::string new_process_name = common::MemSPrintf(STREAMER_NAME "_%s", sid);
   const char* new_name = new_process_name.c_str();
-  int res = stream_exec_func(new_name, params.get(), new ProtocoledClient(fd));
+  int res = stream_exec_func(new_name, params.get(),
+                             new fastocloud::server::tcp::Client(nullptr, common::net::socket_info(cfd)));
   FreeLibrary(dll);
   return res;
 }
