@@ -5,7 +5,7 @@ SET(BRANDING_PROJECT_VERSION "1.6.0.0" CACHE STRING "Branding version for ${BRAN
 SET(BRANDING_PROJECT_BUILD_TYPE_VERSION "rc" CACHE STRING "Build version type for ${BRANDING_PROJECT_NAME}") #default alfa,beta,rc,release
 SET(BRANDING_PROJECT_DOMAIN "www.fastogt.com" CACHE STRING "Branding domain url for ${BRANDING_PROJECT_NAME}") #default
 SET(BRANDING_PROJECT_COMPANYNAME "FastoGT" CACHE STRING "Company name for ${BRANDING_PROJECT_NAME}") #default
-SET(BRANDING_PROJECT_SUMMARY "${BRANDING_PROJECT_NAME} real-time encoding/transcoding process."
+SET(BRANDING_PROJECT_SUMMARY "${BRANDING_PROJECT_NAME} real-time encoding/transcoding service."
   CACHE STRING "Short description of ${BRANDING_PROJECT_NAME}")
 SET(BRANDING_PROJECT_COPYRIGHT "Copyright (C) 2014-2019 ${BRANDING_PROJECT_COMPANYNAME} All Rights Reserved."
   CACHE STRING "Copyright notice for ${BRANDING_PROJECT_NAME}") #default
@@ -58,7 +58,7 @@ OPTION(DEVELOPER_ENABLE_TESTS "Enable tests for ${PROJECT_NAME_TITLE} project" O
 OPTION(DEVELOPER_CHECK_STYLE "Enable check style for ${PROJECT_NAME_TITLE} project" OFF)
 OPTION(DEVELOPER_GENERATE_DOCS "Generate docs api for ${PROJECT_NAME_TITLE} project" OFF)
 OPTION(BUILD_SERVER "Build server for ${PROJECT_NAME_TITLE} project" ON)
-OPTION(BUILD_STREAM "Build server for ${PROJECT_NAME_TITLE} project" ON)
+OPTION(BUILD_STREAM "Build stream for ${PROJECT_NAME_TITLE} project" ON)
 
 ##################################DEFAULT VALUES##########################################
 IF(NOT CMAKE_BUILD_TYPE)

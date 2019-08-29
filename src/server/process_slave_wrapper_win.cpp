@@ -15,7 +15,6 @@
 #include "server/process_slave_wrapper.h"
 
 #include <common/libev/io_loop.h>
-#include <common/net/net.h>
 
 #include "base/stream_config_parse.h"
 
