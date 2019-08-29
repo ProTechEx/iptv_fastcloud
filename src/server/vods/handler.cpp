@@ -71,7 +71,7 @@ void VodsHandler::DataReceived(common::libev::IoClient* client) {
   size_t nread = 0;
   common::ErrnoError errn = client->SingleRead(buff, BUF_SIZE - 1, &nread);
   if ((errn && errn->GetErrorCode() != EAGAIN) || nread == 0) {
-    client->Close();
+    ignore_result(client->Close());
     delete client;
     return base_class::DataReceived(client);
   }
@@ -104,7 +104,7 @@ void VodsHandler::ProcessReceived(VodsClient* hclient, const char* request, size
     if (err) {
       DEBUG_MSG_ERROR(err, common::logging::LOG_LEVEL_ERR);
     }
-    hclient->Close();
+    ignore_result(hclient->Close());
     delete hclient;
     return;
   }
@@ -200,7 +200,7 @@ void VodsHandler::ProcessReceived(VodsClient* hclient, const char* request, size
   }
 
   if (!IsKeepAlive) {
-    hclient->Close();
+    ignore_result(hclient->Close());
     delete hclient;
   }
 }

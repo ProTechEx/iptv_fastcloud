@@ -704,38 +704,36 @@ void IBaseStream::HandleOutputProbeEvent(OutputProbe* probe, GstEvent* event) {
       gpointer parent_ptr = gst_pad_get_parent(probe->GetPad());
       if (parent_ptr) {
         GstElement* parent = GST_ELEMENT_CAST(parent_ptr);
-        if (parent) {
-          if (GST_IS_ELEMENT(parent)) {
-            const std::string element_plugin_name = elements::Element::GetPluginName(parent);
-            if (element_plugin_name == elements::sink::ElementHLSSink::GetPluginName()) {
-              elements::sink::ElementHLSSink* hls_sink = new elements::sink::ElementHLSSink("sink", parent);
-              const std::string location = hls_sink->GetLocation();
-              const common::file_system::ascii_file_string_path fs_template(location);
-              delete hls_sink;
-              const common::uri::Url url = probe->GetUrl();
-              if (fs_template.IsValid()) {
-                if (event_type == GST_EVENT_CUSTOM_UPSTREAM) {
-                  GstClockTime running_time = 0;
-                  gboolean all_headers = FALSE;
-                  guint count = 0;
-                  if (gst_video_event_parse_upstream_force_key_unit(event, &running_time, &all_headers, &count)) {
-                    DEBUG_LOG() << "New keyframe up, running_time: " << running_time << ", all_headers: " << all_headers
-                                << ", count: " << count << ", location: " << fs_template.GetParentDirectory()
-                                << ", url: " << url.GetUrl();
-                  }
-                } else if (event_type == GST_EVENT_CUSTOM_DOWNSTREAM) {
-                  GstClockTime timestamp = 0;
-                  GstClockTime stream_time = 0;
-                  GstClockTime running_time = 0;
-                  gboolean all_headers = FALSE;
-                  guint count = 0;
-                  if (gst_video_event_parse_downstream_force_key_unit(event, &timestamp, &stream_time, &running_time,
-                                                                      &all_headers, &count)) {
-                    DEBUG_LOG() << "New keyframe down, timestamp: " << timestamp << ", stream_time: " << stream_time
-                                << ", running_time: " << running_time << ", all_headers: " << all_headers
-                                << ", count: " << count << ", location: " << fs_template.GetParentDirectory()
-                                << ", url: " << url.GetUrl();
-                  }
+        if (GST_IS_ELEMENT(parent)) {
+          const std::string element_plugin_name = elements::Element::GetPluginName(parent);
+          if (element_plugin_name == elements::sink::ElementHLSSink::GetPluginName()) {
+            elements::sink::ElementHLSSink* hls_sink = new elements::sink::ElementHLSSink("sink", parent);
+            const std::string location = hls_sink->GetLocation();
+            const common::file_system::ascii_file_string_path fs_template(location);
+            delete hls_sink;
+            const common::uri::Url url = probe->GetUrl();
+            if (fs_template.IsValid()) {
+              if (event_type == GST_EVENT_CUSTOM_UPSTREAM) {
+                GstClockTime running_time = 0;
+                gboolean all_headers = FALSE;
+                guint count = 0;
+                if (gst_video_event_parse_upstream_force_key_unit(event, &running_time, &all_headers, &count)) {
+                  DEBUG_LOG() << "New keyframe up, running_time: " << running_time << ", all_headers: " << all_headers
+                              << ", count: " << count << ", location: " << fs_template.GetParentDirectory()
+                              << ", url: " << url.GetUrl();
+                }
+              } else if (event_type == GST_EVENT_CUSTOM_DOWNSTREAM) {
+                GstClockTime timestamp = 0;
+                GstClockTime stream_time = 0;
+                GstClockTime running_time = 0;
+                gboolean all_headers = FALSE;
+                guint count = 0;
+                if (gst_video_event_parse_downstream_force_key_unit(event, &timestamp, &stream_time, &running_time,
+                                                                    &all_headers, &count)) {
+                  DEBUG_LOG() << "New keyframe down, timestamp: " << timestamp << ", stream_time: " << stream_time
+                              << ", running_time: " << running_time << ", all_headers: " << all_headers
+                              << ", count: " << count << ", location: " << fs_template.GetParentDirectory()
+                              << ", url: " << url.GetUrl();
                 }
               }
             }

@@ -32,7 +32,7 @@ namespace fastocloud {
 InputUri::InputUri() : InputUri(0, common::uri::Url()) {}
 
 InputUri::InputUri(uri_id_t id, const common::uri::Url& input, user_agent_t ua)
-    : base_class(), id_(id), input_(input), user_agent_(ua), http_proxy_url_() {}
+    : base_class(), id_(id), input_(input), user_agent_(ua), stream_url_(false), http_proxy_url_() {}
 
 InputUri::uri_id_t InputUri::GetID() const {
   return id_;

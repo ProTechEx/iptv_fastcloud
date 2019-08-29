@@ -1272,7 +1272,7 @@ common::ErrnoError ProcessSlaveWrapper::HandleResponceServiceCommand(ProtocoledD
   fastotv::protocol::request_t req;
   if (dclient->PopRequestByID(resp->id, &req)) {
     if (req.method == DAEMON_SERVER_PING) {
-      HandleResponcePingService(dclient, resp);
+      ignore_result(HandleResponcePingService(dclient, resp));
     } else {
       WARNING_LOG() << "HandleResponceServiceCommand not handled command: " << req.method;
     }

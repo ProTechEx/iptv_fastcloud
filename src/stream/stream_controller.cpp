@@ -388,7 +388,7 @@ common::ErrnoError StreamController::HandleRequestStopStream(common::libev::IoCl
   CHECK(loop_->IsLoopThread());
   fastotv::protocol::protocol_client_t* pclient = static_cast<fastotv::protocol::protocol_client_t*>(client);
   fastotv::protocol::response_t resp = StopStreamResponseSuccess(req->id);
-  pclient->WriteResponse(resp);
+  ignore_result(pclient->WriteResponse(resp));
   Stop();
   return common::ErrnoError();
 }
@@ -398,7 +398,7 @@ common::ErrnoError StreamController::HandleRequestRestartStream(common::libev::I
   CHECK(loop_->IsLoopThread());
   fastotv::protocol::protocol_client_t* pclient = static_cast<fastotv::protocol::protocol_client_t*>(client);
   fastotv::protocol::response_t resp = RestartStreamResponseSuccess(req->id);
-  pclient->WriteResponse(resp);
+  ignore_result(pclient->WriteResponse(resp));
   Restart();
   return common::ErrnoError();
 }
