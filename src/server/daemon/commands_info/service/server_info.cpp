@@ -36,16 +36,11 @@
 #define FULL_SERVICE_INFO_HTTP_HOST_FIELD "http_host"
 #define FULL_SERVICE_INFO_VODS_HOST_FIELD "vods_host"
 #define FULL_SERVICE_INFO_CODS_HOST_FIELD "cods_host"
-#if defined(SUBSCRIBERS)
-#define FULL_SERVICE_INFO_SUBSCRIBERS_HOST_FIELD "subscribers_host"
-#define FULL_SERVICE_INFO_BANDWIDTH_HOST_FIELD "bandwidth_host"
-#endif
 
 #define ONLINE_USERS_DAEMON_FIELD "daemon"
 #define ONLINE_USERS_HTTP_FIELD "http"
 #define ONLINE_USERS_VODS_FIELD "vods"
 #define ONLINE_USERS_CODS_FIELD "cods"
-#define ONLINE_USERS_SUBSCRIBER_FIELD "subscribers"
 
 namespace fastocloud {
 namespace server {
@@ -58,18 +53,8 @@ OnlineUsers::OnlineUsers(size_t daemon, size_t http, size_t vods, size_t cods)
       http_(http),
       vods_(vods),
       cods_(cods)
-#if defined(SUBSCRIBERS)
-      ,
-      subscriber_(0)
-#endif
 {
 }
-
-#if defined(SUBSCRIBERS)
-void OnlineUsers::SetSubscribers(size_t subscribers) {
-  subscriber_ = subscribers;
-}
-#endif
 
 common::Error OnlineUsers::DoDeSerialize(json_object* serialized) {
   OnlineUsers inf;
@@ -97,14 +82,6 @@ common::Error OnlineUsers::DoDeSerialize(json_object* serialized) {
     inf.cods_ = json_object_get_int64(jcods);
   }
 
-#if defined(SUBSCRIBERS)
-  json_object* jsubscriber = nullptr;
-  json_bool jsubscriber_exists = json_object_object_get_ex(serialized, ONLINE_USERS_SUBSCRIBER_FIELD, &jsubscriber);
-  if (jsubscriber_exists) {
-    inf.subscriber_ = json_object_get_int64(jsubscriber);
-  }
-#endif
-
   *this = inf;
   return common::Error();
 }
@@ -114,9 +91,6 @@ common::Error OnlineUsers::SerializeFields(json_object* out) const {
   json_object_object_add(out, ONLINE_USERS_HTTP_FIELD, json_object_new_int64(http_));
   json_object_object_add(out, ONLINE_USERS_VODS_FIELD, json_object_new_int64(vods_));
   json_object_object_add(out, ONLINE_USERS_CODS_FIELD, json_object_new_int64(cods_));
-#if defined(SUBSCRIBERS)
-  json_object_object_add(out, ONLINE_USERS_SUBSCRIBER_FIELD, json_object_new_int64(subscriber_));
-#endif
   return common::Error();
 }
 
@@ -316,10 +290,6 @@ FullServiceInfo::FullServiceInfo(const common::net::HostAndPort& http_host,
       http_host_(http_host),
       vods_host_(vods_host),
       cods_host_(cods_host),
-#if defined(SUBSCRIBERS)
-      subscribers_host_(),
-      bandwidth_host_(),
-#endif
       proj_ver_(PROJECT_VERSION_HUMAN),
       os_(fastotv::commands_info::OperationSystemInfo::MakeOSSnapshot()) {
 }
@@ -335,25 +305,6 @@ common::net::HostAndPort FullServiceInfo::GetVodsHost() const {
 common::net::HostAndPort FullServiceInfo::GetCodsHost() const {
   return cods_host_;
 }
-
-#if defined(SUBSCRIBERS)
-common::net::HostAndPort FullServiceInfo::GetSubscribersHost() const {
-  return subscribers_host_;
-}
-
-void FullServiceInfo::SetSubscribersHost(const common::net::HostAndPort& host) {
-  subscribers_host_ = host;
-}
-
-common::net::HostAndPort FullServiceInfo::GetBandwidthHost() const {
-  return bandwidth_host_;
-}
-
-void FullServiceInfo::SetBandwidthHost(const common::net::HostAndPort& host) {
-  bandwidth_host_ = host;
-}
-
-#endif
 
 std::string FullServiceInfo::GetProjectVersion() const {
   return proj_ver_;
@@ -401,26 +352,6 @@ common::Error FullServiceInfo::DoDeSerialize(json_object* serialized) {
       inf.cods_host_ = host;
     }
   }
-#if defined(SUBSCRIBERS)
-  json_object* jsubscribers_host = nullptr;
-  json_bool jsubscribers_host_exists =
-      json_object_object_get_ex(serialized, FULL_SERVICE_INFO_SUBSCRIBERS_HOST_FIELD, &jsubscribers_host);
-  if (jsubscribers_host_exists) {
-    common::net::HostAndPort host;
-    if (common::ConvertFromString(json_object_get_string(jsubscribers_host), &host)) {
-      inf.subscribers_host_ = host;
-    }
-  }
-  json_object* jbandwidth_host = nullptr;
-  json_bool jbandwidth_host_exists =
-      json_object_object_get_ex(serialized, FULL_SERVICE_INFO_BANDWIDTH_HOST_FIELD, &jbandwidth_host);
-  if (jbandwidth_host_exists) {
-    common::net::HostAndPort host;
-    if (common::ConvertFromString(json_object_get_string(jbandwidth_host), &host)) {
-      inf.bandwidth_host_ = host;
-    }
-  }
-#endif
 
   json_object* jproj_ver = nullptr;
   json_bool jproj_ver_exists = json_object_object_get_ex(serialized, FULL_SERVICE_INFO_VERSION_FIELD, &jproj_ver);
@@ -445,14 +376,6 @@ common::Error FullServiceInfo::SerializeFields(json_object* out) const {
   json_object_object_add(out, FULL_SERVICE_INFO_HTTP_HOST_FIELD, json_object_new_string(http_host_str.c_str()));
   json_object_object_add(out, FULL_SERVICE_INFO_VODS_HOST_FIELD, json_object_new_string(vods_host_str.c_str()));
   json_object_object_add(out, FULL_SERVICE_INFO_CODS_HOST_FIELD, json_object_new_string(cods_host_str.c_str()));
-#if defined(SUBSCRIBERS)
-  std::string subscribers_host_str = common::ConvertToString(subscribers_host_);
-  json_object_object_add(out, FULL_SERVICE_INFO_SUBSCRIBERS_HOST_FIELD,
-                         json_object_new_string(subscribers_host_str.c_str()));
-  std::string bandwidth_host_str = common::ConvertToString(bandwidth_host_);
-  json_object_object_add(out, FULL_SERVICE_INFO_BANDWIDTH_HOST_FIELD,
-                         json_object_new_string(bandwidth_host_str.c_str()));
-#endif
   json_object_object_add(out, FULL_SERVICE_INFO_VERSION_FIELD, json_object_new_string(proj_ver_.c_str()));
   json_object_object_add(out, FULL_SERVICE_INFO_OS_FIELD, jos);
   return base_class::SerializeFields(out);

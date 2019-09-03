@@ -49,11 +49,6 @@
 #include "server/http/handler.h"
 #include "server/http/server.h"
 #include "server/options/options.h"
-#if defined(SUBSCRIBERS)
-#include "server/subscribers/handler.h"
-#include "server/subscribers/server.h"
-#include "server/sync_finder.h"
-#endif
 #include "server/vods/handler.h"
 #include "server/vods/server.h"
 
@@ -195,11 +190,6 @@ ProcessSlaveWrapper::ProcessSlaveWrapper(const std::string& license_key, const C
       vods_handler_(nullptr),
       cods_server_(nullptr),
       cods_handler_(nullptr),
-#if defined(SUBSCRIBERS)
-      subscribers_server_(nullptr),
-      subscribers_handler_(nullptr),
-      finder_(nullptr),
-#endif
       ping_client_timer_(INVALID_TIMER_ID),
       node_stats_timer_(INVALID_TIMER_ID),
       cleanup_files_timer_(INVALID_TIMER_ID),
@@ -221,13 +211,6 @@ ProcessSlaveWrapper::ProcessSlaveWrapper(const std::string& license_key, const C
   cods_handler_ = new CodsHandler(this);
   cods_server_ = new CodsServer(config.cods_host, cods_handler_);
   cods_server_->SetName("cods_server");
-
-#if defined(SUBSCRIBERS)
-  finder_ = new SyncFinder;
-  subscribers_handler_ = new subscribers::SubscribersHandler(finder_, config.bandwidth_host);
-  subscribers_server_ = new subscribers::SubscribersServer(config.subscribers_host, subscribers_handler_);
-  subscribers_server_->SetName("subscribers_server");
-#endif
 }
 
 int ProcessSlaveWrapper::SendStopDaemonRequest(const std::string& license) {
@@ -253,11 +236,6 @@ int ProcessSlaveWrapper::SendStopDaemonRequest(const std::string& license) {
 }
 
 ProcessSlaveWrapper::~ProcessSlaveWrapper() {
-#if defined(SUBSCRIBERS)
-  destroy(&subscribers_server_);
-  destroy(&subscribers_handler_);
-  destroy(&finder_);
-#endif
   destroy(&cods_server_);
   destroy(&cods_handler_);
   destroy(&vods_server_);
@@ -333,27 +311,6 @@ int ProcessSlaveWrapper::Exec(int argc, char** argv) {
     UNUSED(res);
   });
 
-#if defined(SUBSCRIBERS)
-  subscribers::SubscribersServer* subscribers_server =
-      static_cast<subscribers::SubscribersServer*>(subscribers_server_);
-  std::thread subscribers_thread = std::thread([subscribers_server] {
-    common::ErrnoError err = subscribers_server->Bind(true);
-    if (err) {
-      DEBUG_MSG_ERROR(err, common::logging::LOG_LEVEL_ERR);
-      return;
-    }
-
-    err = subscribers_server->Listen(5);
-    if (err) {
-      DEBUG_MSG_ERROR(err, common::logging::LOG_LEVEL_ERR);
-      return;
-    }
-
-    int res = subscribers_server->Exec();
-    UNUSED(res);
-  });
-#endif
-
   int res = EXIT_FAILURE;
   DaemonServer* server = static_cast<DaemonServer*>(loop_);
   common::ErrnoError err = server->Bind(true);
@@ -375,9 +332,6 @@ int ProcessSlaveWrapper::Exec(int argc, char** argv) {
   res = server->Exec();
 
 finished:
-#if defined(SUBSCRIBERS)
-  subscribers_thread.join();
-#endif
   vods_thread.join();
   cods_thread.join();
   http_thread.join();
@@ -442,9 +396,6 @@ void ProcessSlaveWrapper::TimerEmited(common::libev::IoLoop* server, common::lib
       RemoveFilesByExtension((*it).first, CHUNK_EXT);
     }
   } else if (quit_cleanup_timer_ == id) {
-#if defined(SUBSCRIBERS)
-    subscribers_server_->Stop();
-#endif
     vods_server_->Stop();
     cods_server_->Stop();
     http_server_->Stop();
@@ -1072,19 +1023,6 @@ common::ErrnoError ProcessSlaveWrapper::HandleRequestClientSyncService(Protocole
       AddStreamLine(config);
     }
 
-#if defined(SUBSCRIBERS)
-    // refresh subscribers
-    SyncFinder* sfinder = static_cast<SyncFinder*>(finder_);
-    sfinder->Clear();
-    for (const std::string& user : sync_info.GetUsers()) {
-      subscribers::commands_info::UserInfo uinf;
-      common::Error err = uinf.DeSerializeFromString(user);
-      if (!err) {
-        sfinder->AddUser(uinf);
-      }
-    }
-#endif
-
     return dclient->SyncServiceSuccess(req->id);
   }
 
@@ -1338,19 +1276,12 @@ std::string ProcessSlaveWrapper::MakeServiceStats(bool full_stat) const {
   service::OnlineUsers online(daemons_client_count, static_cast<HttpHandler*>(http_handler_)->GetOnlineClients(),
                               static_cast<HttpHandler*>(vods_handler_)->GetOnlineClients(),
                               static_cast<HttpHandler*>(cods_handler_)->GetOnlineClients());
-#if defined(SUBSCRIBERS)
-  online.SetSubscribers(static_cast<HttpHandler*>(subscribers_handler_)->GetOnlineClients());
-#endif
   service::ServerInfo stat(cpu_load, node_stats_->gpu_load, uptime_str, mem_shot, hdd_shot, bytes_recv / ts_diff,
                            bytes_send / ts_diff, sshot, current_time, online);
 
   std::string node_stats;
   if (full_stat) {
     service::FullServiceInfo fstat(config_.http_host, config_.vods_host, config_.cods_host, stat);
-#if defined(SUBSCRIBERS)
-    fstat.SetSubscribersHost(config_.subscribers_host);
-    fstat.SetBandwidthHost(config_.bandwidth_host);
-#endif
     common::Error err_ser = fstat.SerializeToString(&node_stats);
     if (err_ser) {
       const std::string err_str = err_ser->GetDescription();

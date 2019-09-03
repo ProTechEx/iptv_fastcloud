@@ -26,10 +26,6 @@
 #define SERVICE_HTTP_HOST_FIELD "http_host"
 #define SERVICE_VODS_HOST_FIELD "vods_host"
 #define SERVICE_CODS_HOST_FIELD "cods_host"
-#if defined(SUBSCRIBERS)
-#define SERVICE_SUBSCRIBERS_HOST_FIELD "subscribers_host"
-#define SERVICE_BANDWIDTH_HOST_FIELD "bandwidth_host"
-#endif
 #define SERVICE_TTL_FILES_FIELD "ttl_files"
 #define SERVICE_STREAMLINK_PATH "streamlink_path"
 
@@ -77,12 +73,6 @@ common::ErrnoError ReadConfigFile(const std::string& path, common::HashValue** a
       options->Insert(pair.first, common::Value::CreateStringValueFromBasicString(pair.second));
     } else if (pair.first == SERVICE_CODS_HOST_FIELD) {
       options->Insert(pair.first, common::Value::CreateStringValueFromBasicString(pair.second));
-#if defined(SUBSCRIBERS)
-    } else if (pair.first == SERVICE_SUBSCRIBERS_HOST_FIELD) {
-      options->Insert(pair.first, common::Value::CreateStringValueFromBasicString(pair.second));
-    } else if (pair.first == SERVICE_BANDWIDTH_HOST_FIELD) {
-      options->Insert(pair.first, common::Value::CreateStringValueFromBasicString(pair.second));
-#endif
     } else if (pair.first == SERVICE_TTL_FILES_FIELD) {
       time_t ttl;
       if (common::ConvertFromString(pair.second, &ttl)) {
@@ -166,22 +156,6 @@ common::ErrnoError load_config_from_file(const std::string& config_absolute_path
       !common::ConvertFromString(cods_host_str, &lconfig.cods_host)) {
     lconfig.cods_host = common::net::HostAndPort::CreateLocalHost(CODS_PORT);
   }
-
-#if defined(SUBSCRIBERS)
-  common::Value* subscribers_host_field = slave_config_args->Find(SERVICE_SUBSCRIBERS_HOST_FIELD);
-  std::string subscribers_host_str;
-  if (!subscribers_host_field || !subscribers_host_field->GetAsBasicString(&subscribers_host_str) ||
-      !common::ConvertFromString(subscribers_host_str, &lconfig.subscribers_host)) {
-    lconfig.subscribers_host = common::net::HostAndPort::CreateLocalHost(SUBSCRIPERS_PORT);
-  }
-
-  common::Value* bandwidth_host_field = slave_config_args->Find(SERVICE_BANDWIDTH_HOST_FIELD);
-  std::string bandwidth_host_str;
-  if (!bandwidth_host_field || !bandwidth_host_field->GetAsBasicString(&bandwidth_host_str) ||
-      !common::ConvertFromString(bandwidth_host_str, &lconfig.bandwidth_host)) {
-    lconfig.bandwidth_host = common::net::HostAndPort::CreateLocalHost(BANDWIDTH_PORT);
-  }
-#endif
 
   common::Value* ttl_field = slave_config_args->Find(SERVICE_TTL_FILES_FIELD);
   if (!ttl_field || !ttl_field->GetAsTime(&lconfig.ttl_files)) {

@@ -17,9 +17,6 @@
 #include "base/stream_config_parse.h"
 
 #define SYNC_INFO_STREAMS_FIELD "streams"
-#if defined(SUBSCRIBERS)
-#define SYNC_INFO_USERS_FIELD "subscribers"
-#endif
 
 namespace fastocloud {
 namespace server {
@@ -28,22 +25,12 @@ namespace service {
 SyncInfo::SyncInfo()
     : base_class(),
       streams_()
-#if defined(SUBSCRIBERS)
-      ,
-      users_()
-#endif
 {
 }
 
 SyncInfo::streams_t SyncInfo::GetStreams() const {
   return streams_;
 }
-
-#if defined(SUBSCRIBERS)
-SyncInfo::users_t SyncInfo::GetUsers() const {
-  return users_;
-}
-#endif
 
 common::Error SyncInfo::SerializeFields(json_object*) const {
   NOTREACHED() << "Not need";
@@ -66,20 +53,6 @@ common::Error SyncInfo::DoDeSerialize(json_object* serialized) {
     }
     inf.streams_ = streams;
   }
-
-#if defined(SUBSCRIBERS)
-  json_object* jusers = nullptr;
-  json_bool jusers_exists = json_object_object_get_ex(serialized, SYNC_INFO_USERS_FIELD, &jusers);
-  if (jusers_exists) {
-    size_t len = json_object_array_length(jusers);
-    users_t users;
-    for (size_t i = 0; i < len; ++i) {
-      json_object* juser = json_object_array_get_idx(jusers, i);
-      users.push_back(json_object_get_string(juser));
-    }
-    inf.users_ = users;
-  }
-#endif
 
   *this = inf;
   return common::Error();

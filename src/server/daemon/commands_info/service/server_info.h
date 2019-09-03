@@ -34,10 +34,6 @@ class OnlineUsers : public common::serializer::JsonSerializer<OnlineUsers> {
   OnlineUsers();
   explicit OnlineUsers(size_t daemon, size_t http, size_t vods, size_t cods);
 
-#if defined(SUBSCRIBERS)
-  void SetSubscribers(size_t subscribers);
-#endif
-
  protected:
   common::Error DoDeSerialize(json_object* serialized) override;
   common::Error SerializeFields(json_object* out) const override;
@@ -47,9 +43,6 @@ class OnlineUsers : public common::serializer::JsonSerializer<OnlineUsers> {
   size_t http_;
   size_t vods_;
   size_t cods_;
-#if defined(SUBSCRIBERS)
-  size_t subscriber_;
-#endif
 };
 
 class ServerInfo : public common::serializer::JsonSerializer<ServerInfo> {
@@ -108,13 +101,6 @@ class FullServiceInfo : public ServerInfo {
   common::net::HostAndPort GetHttpHost() const;
   common::net::HostAndPort GetVodsHost() const;
   common::net::HostAndPort GetCodsHost() const;
-#if defined(SUBSCRIBERS)
-  common::net::HostAndPort GetSubscribersHost() const;
-  void SetSubscribersHost(const common::net::HostAndPort& host);
-
-  common::net::HostAndPort GetBandwidthHost() const;
-  void SetBandwidthHost(const common::net::HostAndPort& host);
-#endif
   std::string GetProjectVersion() const;
 
  protected:
@@ -125,9 +111,6 @@ class FullServiceInfo : public ServerInfo {
   common::net::HostAndPort http_host_;
   common::net::HostAndPort vods_host_;
   common::net::HostAndPort cods_host_;
-#if defined(SUBSCRIBERS)
-  common::net::HostAndPort subscribers_host_;
-#endif
   common::net::HostAndPort bandwidth_host_;
   std::string proj_ver_;
   fastotv::commands_info::OperationSystemInfo os_;

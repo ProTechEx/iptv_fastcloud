@@ -33,10 +33,6 @@ struct Config {
   common::net::HostAndPort http_host;
   common::net::HostAndPort vods_host;
   common::net::HostAndPort cods_host;
-#if defined(SUBSCRIBERS)
-  common::net::HostAndPort subscribers_host;
-  common::net::HostAndPort bandwidth_host;
-#endif
   time_t ttl_files;  // in seconds
   std::string streamlink_path;
 };

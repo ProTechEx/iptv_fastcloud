@@ -8,12 +8,6 @@ SET(STREAMER_SERVICE_VODS_PORT 7000)
 SET(STREAMER_SERVICE_VODS_HOST "localhost:${STREAMER_SERVICE_VODS_PORT}")
 SET(STREAMER_SERVICE_CODS_PORT 6000)
 SET(STREAMER_SERVICE_CODS_HOST "localhost:${STREAMER_SERVICE_CODS_PORT}")
-IF(SUBSCRIBERS)
-  SET(STREAMER_SERVICE_SUBSCRIBERS_PORT 5000)
-  SET(STREAMER_SERVICE_SUBSCRIBERS_HOST "localhost:${STREAMER_SERVICE_SUBSCRIBERS_PORT}")
-  SET(STREAMER_SERVICE_BANDWIDTH_PORT 4000)
-  SET(STREAMER_SERVICE_BANDWIDTH_HOST "localhost:${STREAMER_SERVICE_BANDWIDTH_PORT}")
-ENDIF(SUBSCRIBERS)
 SET(STREAMER_SERVICE_TTL_FILES 3600)
 SET(STREAMER_SERVICE_STREAMLINK_PATH "/usr/local/bin/streamlink")
 SET(STREAMER_SERVICE_NAME_EXE ${STREAMER_SERVICE_NAME}_s)
@@ -107,32 +101,6 @@ SET(SERVER_VODS_SOURCES
   ${CMAKE_SOURCE_DIR}/src/server/vods/server.cpp
 )
 
-IF(SUBSCRIBERS)
-  SET(SERVER_SUBSCRIBERS_HEADERS
-    ${CMAKE_SOURCE_DIR}/src/server/subscribers/handler.h
-    ${CMAKE_SOURCE_DIR}/src/server/subscribers/client.h
-    ${CMAKE_SOURCE_DIR}/src/server/subscribers/server.h
-    ${CMAKE_SOURCE_DIR}/src/server/subscribers/server_auth_info.h
-    ${CMAKE_SOURCE_DIR}/src/server/subscribers/commands_info/user_info.h
-    ${CMAKE_SOURCE_DIR}/src/server/subscribers/isubscribe_finder.h
-    ${CMAKE_SOURCE_DIR}/src/server/subscribers/rpc/user_rpc_info.h
-
-    ${CMAKE_SOURCE_DIR}/src/server/sync_finder.h
-  )
-
-  SET(SERVER_SUBSCRIBERS_SOURCES
-    ${CMAKE_SOURCE_DIR}/src/server/subscribers/handler.cpp
-    ${CMAKE_SOURCE_DIR}/src/server/subscribers/client.cpp
-    ${CMAKE_SOURCE_DIR}/src/server/subscribers/server.cpp
-    ${CMAKE_SOURCE_DIR}/src/server/subscribers/server_auth_info.cpp
-    ${CMAKE_SOURCE_DIR}/src/server/subscribers/commands_info/user_info.cpp
-    ${CMAKE_SOURCE_DIR}/src/server/subscribers/isubscribe_finder.cpp
-    ${CMAKE_SOURCE_DIR}/src/server/subscribers/rpc/user_rpc_info.cpp
-
-    ${CMAKE_SOURCE_DIR}/src/server/sync_finder.cpp
-  )
-ENDIF(SUBSCRIBERS)
-
 SET(SERVER_DAEMON_HEADERS
   ${CMAKE_SOURCE_DIR}/src/server/daemon/client.h
   ${CMAKE_SOURCE_DIR}/src/server/daemon/server.h
@@ -192,7 +160,6 @@ SET(SERVER_HEADERS
 
   ${SERVER_HTTP_HEADERS}
   ${SERVER_VODS_HEADERS}
-  ${SERVER_SUBSCRIBERS_HEADERS}
   ${SERVER_DAEMON_HEADERS}
   ${PIPE_HEADERS}
   ${TCP_HEADERS}
@@ -210,7 +177,6 @@ SET(SERVER_SOURCES
 
   ${SERVER_HTTP_SOURCES}
   ${SERVER_VODS_SOURCES}
-  ${SERVER_SUBSCRIBERS_SOURCES}
   ${SERVER_DAEMON_SOURCES}
   ${PIPE_SOURCES}
   ${TCP_SOURCES}
@@ -345,12 +311,6 @@ SET(PRIVATE_COMPILE_DEFINITIONS_SLAVE
 IF(OS_WIN)
   SET(PRIVATE_COMPILE_DEFINITIONS_SLAVE ${PRIVATE_COMPILE_DEFINITIONS_SLAVE} -DSTREAMER_EXE_NAME="${STREAMER_EXE_NAME}")
 ENDIF(OS_WIN)
-
-IF(SUBSCRIBERS)
-  SET(PRIVATE_COMPILE_DEFINITIONS_SLAVE ${PRIVATE_COMPILE_DEFINITIONS_SLAVE}
-    -DSUBSCRIPERS_PORT=${STREAMER_SERVICE_SUBSCRIBERS_PORT}
-  )
-ENDIF(SUBSCRIBERS)
 
 SET(EXE_DAEMON_SOURCES ${CMAKE_SOURCE_DIR}/src/server/daemon_slave.cpp)
 

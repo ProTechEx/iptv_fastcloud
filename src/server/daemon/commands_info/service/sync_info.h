@@ -31,16 +31,10 @@ class SyncInfo : public common::serializer::JsonSerializer<SyncInfo> {
   typedef JsonSerializer<SyncInfo> base_class;
   typedef StreamConfig config_t;
   typedef std::vector<config_t> streams_t;
-#if defined(SUBSCRIBERS)
-  typedef std::vector<std::string> users_t;  // UserInfo
-#endif
 
   SyncInfo();
 
   streams_t GetStreams() const;
-#if defined(SUBSCRIBERS)
-  users_t GetUsers() const;
-#endif
 
  protected:
   common::Error DoDeSerialize(json_object* serialized) override;
@@ -48,9 +42,6 @@ class SyncInfo : public common::serializer::JsonSerializer<SyncInfo> {
 
  private:
   streams_t streams_;
-#if defined(SUBSCRIBERS)
-  users_t users_;
-#endif
 };
 
 }  // namespace service

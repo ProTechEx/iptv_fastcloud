@@ -32,11 +32,6 @@
 
 namespace fastocloud {
 namespace server {
-#if defined(SUBSCRIBERS)
-namespace subscribers {
-class ISubscribeFinder;
-}
-#endif
 
 class Child;
 class ProtocoledDaemonClient;
@@ -149,12 +144,6 @@ class ProcessSlaveWrapper : public common::libev::IoLoopObserver, public server:
   // cods (channel on demand)
   common::libev::IoLoop* cods_server_;
   common::libev::IoLoopObserver* cods_handler_;
-#if defined(SUBSCRIBERS)
-  // subscribers
-  common::libev::IoLoop* subscribers_server_;
-  common::libev::IoLoopObserver* subscribers_handler_;
-  subscribers::ISubscribeFinder* finder_;
-#endif
 
   common::libev::timer_id_t ping_client_timer_;
   common::libev::timer_id_t node_stats_timer_;

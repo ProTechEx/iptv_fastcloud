@@ -1,3 +1,7 @@
+1.7.0 /
+[Alexandr Topilski
+- Stabilization
+
 1.6.0 / August 30, 2019
 [Alexandr Topilski
 - Amazon Kinesis Video Streams integration
@@ -8,7 +12,6 @@
 - RTSP input bandwidth calc
 - Json parse optimizations
 - Http proxy for soup
-- Subscribers flag
 - IP cams handling
 - MacOSX build
 - FreeBSD build
@@ -19,7 +22,6 @@
 - Object detection
 - Channels on demand
 - Device count check
-- Subscribers
 - User agent
 - Data statistics in bytes, time in seconds
 - Stabilization
