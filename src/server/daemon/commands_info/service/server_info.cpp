@@ -49,12 +49,7 @@ namespace service {
 OnlineUsers::OnlineUsers() : OnlineUsers(0, 0, 0, 0) {}
 
 OnlineUsers::OnlineUsers(size_t daemon, size_t http, size_t vods, size_t cods)
-    : daemon_(daemon),
-      http_(http),
-      vods_(vods),
-      cods_(cods)
-{
-}
+    : daemon_(daemon), http_(http), vods_(vods), cods_(cods) {}
 
 common::Error OnlineUsers::DoDeSerialize(json_object* serialized) {
   OnlineUsers inf;
@@ -291,8 +286,7 @@ FullServiceInfo::FullServiceInfo(const common::net::HostAndPort& http_host,
       vods_host_(vods_host),
       cods_host_(cods_host),
       proj_ver_(PROJECT_VERSION_HUMAN),
-      os_(fastotv::commands_info::OperationSystemInfo::MakeOSSnapshot()) {
-}
+      os_(fastotv::commands_info::OperationSystemInfo::MakeOSSnapshot()) {}
 
 common::net::HostAndPort FullServiceInfo::GetHttpHost() const {
   return http_host_;

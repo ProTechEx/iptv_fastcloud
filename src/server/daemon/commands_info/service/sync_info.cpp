@@ -22,11 +22,7 @@ namespace fastocloud {
 namespace server {
 namespace service {
 
-SyncInfo::SyncInfo()
-    : base_class(),
-      streams_()
-{
-}
+SyncInfo::SyncInfo() : base_class(), streams_() {}
 
 SyncInfo::streams_t SyncInfo::GetStreams() const {
   return streams_;
