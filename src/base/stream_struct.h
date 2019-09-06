@@ -45,8 +45,6 @@ struct StreamStruct {
 
   ~StreamStruct();
 
-  fastotv::timestamp_t WithoutRestartTime() const;
-
   void ResetDataWait();
 
   stream_id_t id;
@@ -54,6 +52,7 @@ struct StreamStruct {
 
   fastotv::timestamp_t start_time;
   fastotv::timestamp_t loop_start_time;
+  fastotv::timestamp_t idle_time;
   size_t restarts;
   StreamStatus status;
 

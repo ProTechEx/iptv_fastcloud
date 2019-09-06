@@ -1,10 +1,14 @@
+1.6.2 /
+[Alexandr Topilski]
+- Stream quality
+
 1.6.1 / September 4, 2019
-[Alexandr Topilski
+[Alexandr Topilski]
 - Without subscribers
 - Stabilization
 
 1.6.0 / August 30, 2019
-[Alexandr Topilski
+[Alexandr Topilski]
 - Amazon Kinesis Video Streams integration
 - Windows msys2 build
 

@@ -74,6 +74,7 @@ StreamStruct::StreamStruct(stream_id_t sid,
       type(type),
       start_time(start_time),
       loop_start_time(lst),
+      idle_time(0),
       restarts(rest),
       status(status),
       input(input),
@@ -84,11 +85,6 @@ bool StreamStruct::IsValid() const {
 }
 
 StreamStruct::~StreamStruct() {}
-
-fastotv::timestamp_t StreamStruct::WithoutRestartTime() const {
-  const fastotv::timestamp_t current_time = common::time::current_utc_mstime();
-  return current_time - loop_start_time;
-}
 
 void StreamStruct::ResetDataWait() {
   for (size_t i = 0; i < input.size(); ++i) {

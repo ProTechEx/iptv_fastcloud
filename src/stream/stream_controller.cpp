@@ -193,12 +193,17 @@ int StreamController::Exec() {
       break;
     }
 
+    bool is_longer_work = diff_utc_time > restart_after_frozen_sec * 10 * 1000;
+    if (stabled_status != EXIT_SUCCESS && !is_longer_work) {
+      mem_->idle_time += diff_utc_time;
+    }
+
     if (stabled_status == EXIT_SUCCESS) {
       restart_attempts_ = 0;
       continue;
     }
 
-    if (mem_->WithoutRestartTime() / 1000 > restart_after_frozen_sec * 10) {  // if longer work
+    if (diff_utc_time) {  // if longer work
       restart_attempts_ = 0;
       continue;
     }
@@ -220,6 +225,8 @@ int StreamController::Exec() {
     std::cv_status interrupt_status = stop_cond_.wait_for(lock, std::chrono::seconds(wait_time));
     if (interrupt_status == std::cv_status::no_timeout) {  // if notify
       restart_attempts_ = 0;
+    } else {
+      mem_->idle_time += wait_time * 1000;
     }
   }
 
