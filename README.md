@@ -4,6 +4,7 @@ About IPTV/Video cloud
 * Cross-platform (Linux, MacOSX, FreeBSD, Raspbian/Armbian, Windows)
 * GPU/CPU Encode/Decode/Post Processing
 * Stream statistics
+* CCTV
 * Relays
 * Timeshifts
 * Catchups
