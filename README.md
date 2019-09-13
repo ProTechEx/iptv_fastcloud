@@ -20,7 +20,7 @@ About IPTV/Video cloud
 * Restream/Transcode from online streaming services like YouTube, Twitch
 * Mosaic
 * Many Outputs
-* Physical Inputs (IP Camera)
+* Physical Inputs (IP Camera, DVB-T/C/S, ATSC, ISDB-T and DTMB)
 * Streaming Protocols
 * File Formats
 * Presets
