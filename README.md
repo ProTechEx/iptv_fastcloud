@@ -43,7 +43,22 @@ About IPTV/Video cloud
 * [Docker Image](https://hub.docker.com/r/fastogt/fastocloud)
 
 ### Use cases:
-
+* Broadcast media content
+* YouTube remove AD
+* Insert your logo to the stream, watermark
+* Record/Timeshift video
+* Play own playlist
+* Mosaic, view many streams in same time on single window
+* Video effects in streams or files
+* Insert AD into stream
+* Subtitles to text conversions and vise versa
+* EPG scanning
+* Record and broadcast video from cameras
+* Detect objects in real-time video and send email/push notifications
+* Objects classification, open doors, time tracking, lock/unlock devices
+* Fire/Smoke detection with notifications
+* Livepeer mining crypto
+* Streams find bot, with quality analysis
 Visit our site: [fastocloud.com](https://fastocloud.com)
 
 [Admin panel](https://github.com/fastogt/iptv_admin)
