@@ -5,6 +5,14 @@ About IPTV/Video cloud
 * GPU/CPU Encode/Decode/Post Processing
 * Stream statistics
 * CCTV
+* Adaptive hls streams
+* Temporary urls
+* HLS push
+* EPG scanning
+* Subtitles to text conversions
+* AD insertion
+* Logo overlay
+* Video effects
 * Relays
 * Timeshifts
 * Catchups
@@ -33,6 +41,8 @@ About IPTV/Video cloud
 * [Amazon Kinesis Video Streams integration](https://aws.amazon.com/kinesis/video-streams)
 * [Admin panel](https://github.com/fastogt/iptv_admin)
 * [Docker Image](https://hub.docker.com/r/fastogt/fastocloud)
+
+### Use cases:
 
 Visit our site: [fastocloud.com](https://fastocloud.com)
 
