@@ -59,6 +59,7 @@ About IPTV/Video cloud
 * Fire/Smoke detection with notifications
 * Livepeer mining crypto
 * Streams find bot, with quality analysis
+
 Visit our site: [fastocloud.com](https://fastocloud.com)
 
 [Admin panel](https://github.com/fastogt/iptv_admin)
