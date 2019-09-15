@@ -58,7 +58,7 @@ About IPTV/Video cloud
 * Objects classification, open doors, time tracking, lock/unlock devices
 * Fire/Smoke detection with notifications
 * Livepeer mining crypto
-* Streams find bot, with quality analysis
+* Streams find bot, with quality analysis, test m3u file streams
 
 Visit our site: [fastocloud.com](https://fastocloud.com)
 
