@@ -53,12 +53,13 @@ About IPTV/Video cloud
 * Insert AD into stream
 * Subtitles to text conversions and vise versa
 * EPG scanning
+* Streams find bot, with quality analysis, test m3u file streams
 * Record and broadcast video from cameras
 * Detect objects in real-time video and send email/push notifications
 * Objects classification, open doors, time tracking, lock/unlock devices
 * Fire/Smoke detection with notifications
 * Livepeer mining crypto
-* Streams find bot, with quality analysis, test m3u file streams
+* CCTV Monitoring service
 
 Visit our site: [fastocloud.com](https://fastocloud.com)
 
