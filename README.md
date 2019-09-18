@@ -29,7 +29,7 @@ About IPTV/Video cloud
 * HTTP Live Streaming (HLS) server-side support
 * Public API, client server communication via [JSON RPC](https://www.jsonrpc.org/specification)
 * Protocol gzip compression
-* Deep learning video analysis (Paid, demo by request)
+* Deep learning video analysis
 * Supported deep learning frameworks: 
   * Tensorflow
   * NCSDK 
